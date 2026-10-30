@@ -12,7 +12,8 @@ Blender is right-handed and UE is left-handed: the importer flips Y, so rotation
 - Import Uniform Scale **1.0**; Convert Scene ON; Force Front XAxis OFF; Convert Scene Unit ON.
 - **Body files and each `parts/*.fbx`: Combine Meshes ON**, Import Mesh LODs ON. LODs arrive from the FBX LodGroup (`_LOD0.._LOD3`; parts carry LOD0-LOD1, tube parts LOD0-LOD3). Suggested screen sizes: 1.0 / 0.5 / 0.25 / 0.1.
 - Auto Generate Collision **OFF**: custom collision comes in as `UCX_<MeshName>_NN` convex hulls. Fighter body 52, 4C body 140, 1 per part, tubes 14 per tube (4 per walkable section + 1 per door).
-- Sockets: every `SOCKET_*` empty imports as a static-mesh socket; the socket name is the empty name minus the `SOCKET_` prefix.
+- Sockets: every `SOCKET_*` empty is **parented to its static mesh's LOD0 node** (fixed 2026-10-29 22:55, since UE drops unparented sockets): `SM_Corvette4C_Hull` (59), `SM_FighterC_Hull` (23), `SM_BoardingTube_BPx_LOD0` (5 each), and each turret or gun part's `_LOD0`. World position and rotation are unchanged (re-import check: ≤0.014 mm, ≤0.00002°).
+- **UE socket names have the `SOCKET_` prefix stripped**: `SOCKET_Dock_Port` → `Dock_Port`, `SOCKET_DockCollar_Port` → `DockCollar_Port`, `SOCKET_Muzzle_L` → `Muzzle_L`. Socket tables below list the FBX names; use the stripped name in Blueprints and C++ (`GetSocketLocation("Dock_Port")`). Sockets come in relative to the combined mesh pivot = ship origin, so positions match the tables.
 - Normals: Import Normals and Tangents (the FBX has smoothing groups and custom split normals). Generate Lightmap UVs **OFF**: UV1 is a packed, non-overlapping lightmap channel on every static mesh (Lightmap Coordinate Index 1). UV0 is the tiling material channel.
 - Do **not** import `SM_FighterC.fbx` / `SM_Corvette4C.fbx` with Combine Meshes ON: that bakes the moving parts into the hull. Use the Body + parts route.
 
@@ -81,7 +82,7 @@ Fighter sockets (23; ship space, metres):
 | `SOCKET_Spot_Fighter` | (0, 0, 0) |
 
 ## Corvette 4C, v6.3
-- Size: **127.35 × 67.0 × 33.067 m**. Tris: body LOD0 78,684, LOD1 39,341, LOD2 18,831, LOD3 6,745; parts 8,680. UCX 140, sockets 59.
+- Size: **127.35 × 67.0 × 33.067 m**. Tris: body LOD0 78,684, LOD1 39,341, LOD2 18,831, LOD3 6,743; parts 8,680. UCX 140, sockets 59.
 - Moving parts (ship-space pivots; attach each part at the body socket of the same name):
   - `HangarDoor_L` (−10.325, 14.6, 9.667) and `_R` (23.675, 14.6, 9.667): push 2.9 m along +Y, then rotate 90° about Z (L +90°, R −90° in Blender).
   - `Turret_01..03_Base`: yaw about Z at (23.675 / 5.675 / −11.325, 0, 29.867). `_Gun` pitches about Y at its base's `SOCKET_Gun`.

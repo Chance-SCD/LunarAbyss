@@ -9,7 +9,10 @@ PROJ = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())
 SRC = os.path.join(PROJ, "SourceArt")
 DEST = "/Game/Blockouts"
 MAP = "/Game/Maps/L_Slice_Graybox"
-SOCKETS = json.load(open(os.path.join(PROJ, "Scripts", "blockout_sockets.json")))
+# Forge's re-export parents every SOCKET_* empty to its mesh, so sockets import natively (json workaround dropped).
+# forge_socket_expect.json (from Blender: UE-space forward/up axes and location per socket) is used to verify them.
+TILTED = {'Boarding_BP1','Boarding_BP4','Dock_Dorsal','Dock_Ventral','ShieldEmitter_01','ShieldEmitter_02','ShieldEmitter_03','ShieldEmitter_04','ShieldEmitter_05','ShieldEmitter_06','Turret_04','Camera_Chase','RCS_Up','RCS_Down'}
+EXPECT = json.load(open(os.path.join(PROJ, "Scripts", "forge_socket_expect.json")))
 # Forge handoff (art/export_UE, IMPORT_README.md): Body + parts route, Combine ON per file, LODs ON,
 # normals+tangents from FBX, no auto collision (UCX), no lightmap UV generation (UV1 = lightmap, index 1).
 # Not imported: SM_FighterC.fbx / SM_Corvette4C.fbx (reference only), SK_FighterC.fbx (skeletal; SM route used).
@@ -86,13 +89,28 @@ for rel, dest in JOBS:
         name, mesh = import_one(rel, dest, 100.0); L = x_len(mesh)
     def has(n): return bool(mesh.find_socket(strip(n)) or mesh.find_socket("SOCKET_" + strip(n)))
     added = 0
-    for s in SOCKETS.get(name, []):
-        if has(s["name"]): continue
-        sock = unreal.StaticMeshSocket(mesh)
-        sock.set_editor_property("socket_name", strip(s["name"]))
-        sock.set_editor_property("relative_location", unreal.Vector(*s["loc"]))
-        sock.set_editor_property("relative_rotation", unreal.Rotator(0.0, 0.0, s["yaw"]))
-        mesh.add_socket(sock); added += 1
+    bad = []; tilt = []; rolled = 0
+    exp = EXPECT.get(name, {})
+    for sn, e in exp.items():
+        sk = mesh.find_socket(sn)
+        if not sk: bad.append(sn + ":MISSING"); continue
+        rot = sk.get_editor_property("relative_rotation"); loc = sk.get_editor_property("relative_location")
+        f, u = rot.get_forward_vector(), rot.get_up_vector()
+        df = (f - unreal.Vector(*e["fwd"])).length(); du = (u - unreal.Vector(*e["up"])).length()
+        dl = (loc - unreal.Vector(*e["loc"])).length()
+        if df <= 0.02 and dl <= 1.0 and du > 0.02:
+            # FBX empties come in with the Blender empty-axis roll (-90 about local X); forward/location are right,
+            # so rebuild the rotation from Blender's forward/up and store it on the socket.
+            fixed = unreal.MathLibrary.make_rot_from_xz(unreal.Vector(*e["fwd"]), unreal.Vector(*e["up"]))
+            sk.set_editor_property("relative_rotation", fixed); rolled += 1
+            rot = fixed; u = rot.get_up_vector(); f = rot.get_forward_vector()
+            df = (f - unreal.Vector(*e["fwd"])).length(); du = (u - unreal.Vector(*e["up"])).length()
+        if sn in TILTED or (sn.startswith("RCS") and ("Up" in sn or "Down" in sn)): tilt.append("%s P%.1f/Y%.1f/R%.1f" % (sn, rot.pitch, rot.yaw, rot.roll))
+        if df > 0.02 or du > 0.02 or dl > 1.0: bad.append("%s:fwd%.3f/up%.3f/loc%.1fcm rot=%s" % (sn, df, du, dl, rot))
+    if exp:
+        if rolled: unreal.EditorAssetLibrary.save_loaded_asset(mesh)
+        log("%s socket check: %d expected, %d in mesh, %d roll-corrected, %d bad %s" % (name, len(exp), sum(1 for sn in exp if mesh.find_socket(sn)), rolled, len(bad), bad))
+        if tilt: log("%s tilted sockets: %s" % (name, "; ".join(tilt)))
     try:
         mesh.set_editor_property("light_map_coordinate_index", 1)
     except Exception as e:
@@ -104,38 +122,41 @@ for rel, dest in JOBS:
         if bs:
             bs.set_editor_property("collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
     missing = [k for k in KEY_SOCKETS.get(name, []) if not has(k)]
-    line = "%s: X %.1f cm, LODs %d, mats %d, +%d json sockets, key sockets missing: %s" % (name, L, nlod, nmat, added, missing or "none")
+    line = "%s: X %.1f cm, LODs %d, mats %d, key sockets missing: %s" % (name, L, nlod, nmat, missing or "none")
     log(line); REPORT.append(line)
     unreal.EditorAssetLibrary.save_loaded_asset(mesh)
 # ---- Map ----
 les = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-if unreal.EditorAssetLibrary.does_asset_exist(MAP):
-    unreal.EditorAssetLibrary.delete_asset(MAP)
-les.new_level(MAP)
+REBUILD_MAP = not unreal.EditorAssetLibrary.does_asset_exist(MAP)  # keep an existing map (it holds the Echo-S lights)
+if not REBUILD_MAP:
+    log("Map exists; keeping it (meshes are referenced by path and pick up the reimport)")
+else:
+  les.new_level(MAP)
 
-def spawn(cls, loc, rot=unreal.Rotator(0, 0, 0)):
-    return eas.spawn_actor_from_class(cls, unreal.Vector(*loc), rot)
+  def spawn(cls, loc, rot=unreal.Rotator(0, 0, 0)):
+      return eas.spawn_actor_from_class(cls, unreal.Vector(*loc), rot)
 
-sun = spawn(unreal.DirectionalLight, (0, 0, 5000), unreal.Rotator(0, -40, -30))
-sun.light_component.set_editor_property("atmosphere_sun_light", True)
-spawn(unreal.SkyAtmosphere, (0, 0, 0))
-sky = spawn(unreal.SkyLight, (0, 0, 6000))
-sky.light_component.set_editor_property("real_time_capture", True)
-sky.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
-spawn(unreal.ExponentialHeightFog, (0, 0, -20000))
+  sun = spawn(unreal.DirectionalLight, (0, 0, 5000), unreal.Rotator(0, -40, -30))
+  sun.light_component.set_editor_property("atmosphere_sun_light", True)
+  spawn(unreal.SkyAtmosphere, (0, 0, 0))
+  sky = spawn(unreal.SkyLight, (0, 0, 6000))
+  sky.light_component.set_editor_property("real_time_capture", True)
+  sky.light_component.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+  spawn(unreal.ExponentialHeightFog, (0, 0, -20000))
 
-corv_cls = unreal.load_class(None, "/Script/LunarAbyss.CorvetteHangar")
-corv = spawn(corv_cls, (0, 0, 0))
-corv.set_actor_label("Corvette4C")
-corv.get_editor_property("hull").set_static_mesh(unreal.load_asset("/Game/Ships/Corvette4C/SM_Corvette4C_Body"))
-corv.get_editor_property("interior").set_static_mesh(unreal.load_asset(DEST + "/SM_Corvette4C_Interior_Blockout"))
+  corv_cls = unreal.load_class(None, "/Script/LunarAbyss.CorvetteHangar")
+  corv = spawn(corv_cls, (0, 0, 0))
+  corv.set_actor_label("Corvette4C")
+  corv.get_editor_property("hull").set_static_mesh(unreal.load_asset("/Game/Ships/Corvette4C/SM_Corvette4C_Body"))
+  corv.get_editor_property("interior").set_static_mesh(unreal.load_asset(DEST + "/SM_Corvette4C_Interior_Blockout"))
 
-# Player start at SOCKET_PlayerSpawn_Bridge (35.7, 0, 22.97) m + half capsule.
-ps = spawn(unreal.PlayerStart, (3570.0, 0.0, 2297.0 + 100.0))
-les.save_current_level()
-log("Map saved: " + MAP)
-open(os.path.join(PROJ, "Saved", "import_report.txt"), "w").write("\n".join(REPORT))
+  # Player start at SOCKET_PlayerSpawn_Bridge (35.7, 0, 22.97) m + half capsule.
+  ps = spawn(unreal.PlayerStart, (3570.0, 0.0, 2297.0 + 100.0))
+  les.save_current_level()
+  log("Map saved: " + MAP)
+  open(os.path.join(PROJ, "Saved", "import_report.txt"), "w").write("\n".join(REPORT))
+
 
 # ---- Move tuning data table ----
 try:
