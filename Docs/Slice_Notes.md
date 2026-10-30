@@ -37,10 +37,16 @@ Parts (hangar doors, turrets, gear) and tubes are imported but not yet attached/
 HP 220 (Orion, TENTATIVE). Offline at 0 HP or by G; gravity ramps 1 -> 0 over 1.0 s (RampOutTime), then crew inside the interior bounds go MOVE_Flying,
 gravity 0, a random drift of ~15 cm/s, push-off accel 0.6 m/s^2, max 1.5 m/s, no braking.
 Online again: crew go MOVE_Falling and gravity ramps 0 -> 1 over 1.5 s, then walk on landing.
-Fall damage (DT_Slice_GravityTuning): 15 HP x (drop - 3 m) x g at impact, drop from the feet; falls that started
-while g < 1 are capped at 40% of MaxHealth (140 -> 56). Corvette: Max 250, Boost 320 m/s, accel 30 m/s^2. Fighter: 450/600, 120.
+Fall damage (Ship_Combat_Stats_Spec v0.4.5): from impact speed v, 15 x (v^2 / (2 x 9.81) - 3) HP; only falls that
+start during a gravity restore are capped at 40% of MaxHealth (140 -> 56). Jump Z = 3.5 m/s x (g / 9.81)^0.25.
+Stub dock point: `DockPortPoint` on hull socket `DockCollar_Port` (yaw -90 in UE). Corvette: Max 250, Boost 320 m/s, accel 30 m/s^2. Fighter: 450/600, 120.
 
 ## Import
 `Scripts/import_blockouts.py` (headless, see header). Combine Meshes ON (one asset each), sockets from the FBX
 plus missing ones from `Scripts/blockout_sockets.json` (extracted from Atlas-V's blend), interior collision
 complex-as-simple.
+
+## Jump (Data/DT_Slice_MoveTuning.csv -> /Game/Data/DT_Slice_MoveTuning, row struct FSliceMoveTuningRow)
+Base jump height 0.6 m at 1 g (v0 = sqrt(2 x 9.81 x 0.6) = 3.43 m/s), velocity x (g / 9.81)^0.25 with current gravity,
+apex capped at 1.4 m while indoors (flag set by the gravity engine when inside the interior bounds; `SetIndoors` for volumes).
+Below 0.1 g: `IsMagBootMode()` true (stub, no effect yet).

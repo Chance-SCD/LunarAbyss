@@ -102,10 +102,12 @@ void UGravityEngineComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	{
 		ACrewCharacter* C = *It;
 		const bool bInside = IsInside(C);
+		C->SetIndoors(bInside);
 		if (bInside)
 		{
 			if (bZeroG) ApplyStateTo(C, false);
 			C->SetShipGravityScale(GravityAlpha);
+			C->SetGravityRestoring(bOnline && GravityAlpha < 1.f);
 		}
 		else if (Floating.Contains(C))
 		{

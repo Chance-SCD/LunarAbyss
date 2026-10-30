@@ -10,6 +10,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
+#include "SliceTuning.h"
 
 namespace { constexpr float M = 100.f; }
 
@@ -29,12 +30,28 @@ ACrewCharacter::ACrewCharacter()
 	Move->NavAgentProps.bCanCrouch = true;
 	Move->MaxStepHeight = 45.f;
 	Move->SetWalkableFloorAngle(44.77f);
-	Move->JumpZVelocity = 350.f;
+	Move->JumpZVelocity = FMath::Sqrt(2.f * 9.81f * BaseJumpHeightM) * M;
+	MoveTuningTable = TSoftObjectPtr<UDataTable>(FSoftObjectPath(TEXT("/Game/Data/DT_Slice_MoveTuning.DT_Slice_MoveTuning")));
 	Move->AirControl = 0.2f;
 	// Moving-base support: inherit base velocity when leaving a moving floor.
 	Move->bImpartBaseVelocityX = Move->bImpartBaseVelocityY = Move->bImpartBaseVelocityZ = true;
 	Move->bImpartBaseAngularVelocity = true;
 	UpdateSpeeds();
+}
+
+void ACrewCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	if (UDataTable* DT = MoveTuningTable.LoadSynchronous())
+	{
+		if (const FSliceMoveTuningRow* R = DT->FindRow<FSliceMoveTuningRow>(TEXT("Default"), TEXT("CrewMoveTuning")))
+		{
+			BaseJumpHeightM = R->BaseJumpHeightM;
+			JumpGravityExponent = R->JumpGravityExponent;
+			IndoorJumpHeightCapM = R->IndoorJumpHeightCapM;
+			MagBootBelowG = R->MagBootBelowG;
+		}
+	}
 }
 
 void ACrewCharacter::UpdateSpeeds()
@@ -175,7 +192,7 @@ void ACrewCharacter::StartFall()
 {
 	bTrackingFall = true;
 	FallApexZ = GetActorLocation().Z; // capsule centre: same delta as feet height
-	bFallStartedLowG = GetCharacterMovement()->GravityScale < 0.999f;
+	bFallStartedLowG = bGravityRestoring;
 }
 
 void ACrewCharacter::SetShipGravityScale(float Scale)
@@ -196,6 +213,13 @@ void ACrewCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (bTrackingFall) FallApexZ = FMath::Max(FallApexZ, GetActorLocation().Z);
+	// Jump: v0 from BaseJumpHeightM at 1 g, scaled by (g / 9.81)^exp with current gravity; apex capped indoors.
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	const float GMs2 = FMath::Max(FMath::Abs(Move->GetGravityZ()) / M, 0.01f);
+	float V = FMath::Sqrt(2.f * 9.81f * BaseJumpHeightM) * FMath::Pow(GMs2 / 9.81f, JumpGravityExponent);
+	if (bIndoors) V = FMath::Min(V, FMath::Sqrt(2.f * GMs2 * IndoorJumpHeightCapM));
+	Move->JumpZVelocity = V * M;
+	bMagBootMode = bZeroG || GMs2 < MagBootBelowG * 9.81f;
 }
 
 void ACrewCharacter::Landed(const FHitResult& Hit)
@@ -204,13 +228,15 @@ void ACrewCharacter::Landed(const FHitResult& Hit)
 	if (!bTrackingFall) return;
 	bTrackingFall = false;
 	const float DropM = (FallApexZ - GetActorLocation().Z) / M;
-	const float G = FMath::Clamp(GetCharacterMovement()->GravityScale, 0.f, 1.f);
-	if (DropM > FallSafeHeight && G > 0.f)
+	const float V = FMath::Max(0.f, -GetCharacterMovement()->Velocity.Z / M); // impact speed, m/s
+	const float EquivDropM = V * V / (2.f * 9.81f);
+	const float G = GetCharacterMovement()->GravityScale;
+	if (EquivDropM > FallSafeHeight)
 	{
-		float Dmg = FallDamagePerMetre * (DropM - FallSafeHeight) * G;
+		float Dmg = FallDamagePerMetre * (EquivDropM - FallSafeHeight);
 		if (bFallStartedLowG) Dmg = FMath::Min(Dmg, MaxHealth * RestoreFallDamageCapPct / 100.f);
 		TakeDamage(Dmg, FDamageEvent(), GetController(), this);
-		UE_LOG(LogTemp, Log, TEXT("Fall %.2f m at %.2f g%s -> %.1f damage (HP %.1f)"), DropM, G, bFallStartedLowG ? TEXT(" (restore cap)") : TEXT(""), Dmg, Health);
+		UE_LOG(LogTemp, Log, TEXT("Fall %.2f m, impact %.2f m/s (equiv %.2f m) at %.2f g%s -> %.1f damage (HP %.1f)"), DropM, V, EquivDropM, G, bFallStartedLowG ? TEXT(" (restore cap)") : TEXT(""), Dmg, Health);
 	}
 }
 

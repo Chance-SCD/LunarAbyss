@@ -46,6 +46,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UStaticMeshComponent> Interior;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<USceneComponent> LaunchPoint;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UGravityEngineComponent> GravityEngine;
+	/** Stub dock point at hull socket DockCollar_Port (+X = outward, ship port side). Nothing docks yet. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<USceneComponent> DockPortPoint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Docking") FName DockPortSocket = TEXT("DockCollar_Port");
 
 	/** Fighter parking spot sockets tried in order (UE strips the SOCKET_ prefix on import; both forms are tried). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hangar")

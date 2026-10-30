@@ -5,6 +5,8 @@
 #include "Engine/StaticMesh.h"
 #include "TimerManager.h"
 
+static void SnapToSocketIfPresent(ACorvetteHangar* V, USceneComponent* C, FName Socket);
+
 ACorvetteHangar::ACorvetteHangar()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -25,6 +27,11 @@ ACorvetteHangar::ACorvetteHangar()
 	// Fallback = SOCKET_Hangar (6.675, 1.0, 9.667) m, yaw 90 in Blender -> UE (667.5, -100, 966.7) cm, yaw -90
 	LaunchPoint->SetRelativeLocationAndRotation(FVector(-382.5f, -350.f, 966.7f), FRotator(0.f, -90.f, 0.f)); // Hangar_Spot_Fighter fallback
 
+	DockPortPoint = CreateDefaultSubobject<USceneComponent>(TEXT("DockPortPoint"));
+	DockPortPoint->SetupAttachment(Hull);
+	// Fallback = Forge SOCKET_DockCollar_Port (39.4, 14.05, 14.87) m, rot Z 90 Blender -> UE (3940, -1405, 1487) cm, yaw -90
+	DockPortPoint->SetRelativeLocationAndRotation(FVector(3940.f, -1405.f, 1487.f), FRotator(0.f, -90.f, 0.f));
+
 	GravityEngine = CreateDefaultSubobject<UGravityEngineComponent>(TEXT("GravityEngine"));
 
 	// Crew walk on the interior mesh; the hull's UCX hulls would enclose the decks, so pawns ignore the hull.
@@ -41,6 +48,7 @@ void ACorvetteHangar::OnConstruction(const FTransform& Transform)
 	if (!Hull->GetStaticMesh() && !HullMeshAsset.IsNull()) Hull->SetStaticMesh(HullMeshAsset.LoadSynchronous());
 	if (!Interior->GetStaticMesh() && !InteriorMeshAsset.IsNull()) Interior->SetStaticMesh(InteriorMeshAsset.LoadSynchronous());
 	SnapLaunchPointToSocket();
+	SnapToSocketIfPresent(this, DockPortPoint, DockPortSocket);
 }
 
 bool ACorvetteHangar::GetSocketTransform(FName Socket, FTransform& Out) const
@@ -84,6 +92,12 @@ bool ACorvetteHangar::SnapLaunchPointToSocket()
 	}
 	UE_LOG(LogTemp, Warning, TEXT("No launch socket found on %s; using default LaunchPoint."), *GetName());
 	return false;
+}
+
+static void SnapToSocketIfPresent(ACorvetteHangar* V, USceneComponent* C, FName Socket)
+{
+	FTransform T;
+	if (C && V->GetSocketTransform(Socket, T)) C->SetWorldLocationAndRotation(T.GetLocation(), T.GetRotation());
 }
 
 void ACorvetteHangar::BeginPlay()

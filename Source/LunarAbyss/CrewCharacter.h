@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Engine/DataTable.h"
 #include "CrewCharacter.generated.h"
 
 class UCameraComponent;
@@ -35,12 +36,26 @@ public:
 	/** Zero-g push-off: max drift speed and acceleration from input, m/s and m/s^2. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|ZeroG") float ZeroGMaxSpeed = 1.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|ZeroG") float ZeroGPushAccel = 0.6f;
-	/** DT_Slice_GravityTuning (TENTATIVE). Damage = FallDamagePerMetre x (Drop - FallSafeHeight) x g at impact; drop from the feet. */
+	/** Ship_Combat_Stats_Spec v0.4.5 (TENTATIVE): from impact speed v (m/s), Damage = FallDamagePerMetre x (v^2 / (2 x 9.81) - FallSafeHeight). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Health") float FallSafeHeight = 3.0f;      // m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Health") float FallDamagePerMetre = 15.f;  // HP/m
-	/** Falls that start while gravity < 1 (restore ramp) are capped at this % of MaxHealth. */
+	/** Only falls that start during a gravity restore (engine online, ramp < 1) are capped at this % of MaxHealth. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Health") float RestoreFallDamageCapPct = 40.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Health") float MaxHealth = 140.f;
+	/** Jump tuning (DT_Slice_MoveTuning row "Default" overrides these at BeginPlay if the table exists). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Jump") float BaseJumpHeightM = 0.6f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Jump") float JumpGravityExponent = 0.25f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Jump") float IndoorJumpHeightCapM = 1.4f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Jump") float MagBootBelowG = 0.1f;
+	UPROPERTY(EditAnywhere, Category = "Crew|Jump") TSoftObjectPtr<UDataTable> MoveTuningTable;
+	/** Indoors flag (set by the ship's gravity engine while inside its interior bounds; a volume can set it too). */
+	UFUNCTION(BlueprintCallable, Category = "Crew") void SetIndoors(bool b) { bIndoors = b; }
+	UFUNCTION(BlueprintPure, Category = "Crew") bool IsIndoors() const { return bIndoors; }
+	/** Stub: true when gravity < MagBootBelowG (no gameplay effect yet). */
+	UFUNCTION(BlueprintPure, Category = "Crew") bool IsMagBootMode() const { return bMagBootMode; }
+	virtual void BeginPlay() override;
+	/** Set by the gravity engine while it is ramping back in (restore). */
+	void SetGravityRestoring(bool b) { bGravityRestoring = b; }
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Crew|Health") float Health = 140.f;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
@@ -67,6 +82,9 @@ private:
 	bool bWalking = false;
 	float FallApexZ = 0.f;
 	bool bFallStartedLowG = false;
+	bool bGravityRestoring = false;
+	bool bIndoors = false;
+	bool bMagBootMode = false;
 	void StartFall();
 	bool bTrackingFall = false;
 };
