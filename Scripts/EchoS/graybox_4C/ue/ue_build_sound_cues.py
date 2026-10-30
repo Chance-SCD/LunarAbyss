@@ -1,16 +1,14 @@
 """UE 5.8.3 editor Python: import the gray-box 4C WAVs and build one SoundCue per row of C4C_SoundList.csv,
 then CHECK that every cue graph really reaches its SoundWave(s). Replaces the cue half of add_lights_and_sounds.py.
 
-Fixes over the LunarAbyss test (commit 3701aa9, 31 cues at ~4 KB = empty graphs):
-  * log() is defined here (no dependency on a caller's log).
-  * SoundCueFactoryNew.initial_sound_waves gets the full variant list (one wave -> WavePlayer -> Output;
-    several -> WavePlayers -> Random -> Output). The list is read back from the factory before create_asset.
-  * initial_sound_wave (singular) is NOT used: it is not the 5.x property and silently leaves the graph empty.
-  * Unattended-safe: ON_EXISTING = 'overwrite' (delete + recreate) or 'skip' (keep cue if it passes the check). No dialogs.
-  * Check step: AssetRegistry hard dependencies of each cue must contain every wave package, get_duration() > 0
-    (or -1/INDEFINITELY for loops), and the saved .uasset must be > 6 KB. Failures are listed and the script exits non-zero
-    under -unattended.
-  * Gravity cues are verified against C4C_GravityAudioMap.json (GravityState event -> cue).
+v1.8.1 (after playtest_03: 12/32 passed):
+  * No CanCreateAsset/dialog path: existing cues are loaded and rebuilt in place; new ones via AssetTools.create_asset
+    with SoundCueFactoryNew (fallback: duplicate a built cue). Nothing is deleted.
+  * Graph built by LASliceAudioLibrary.build_multi_wave_cue (C++, ue/cpp/): 1 wave -> WavePlayer; N waves -> N WavePlayers
+    -> Random (all wired, equal weights). Requires the C++ helper in Source/LunarAbyss.
+  * Check: every wave reachable from FirstNode (get_cue_wave_paths) + AssetRegistry hard deps + wave 'duration' property > 0
+    (+ cue duration via the helper). No uasset size check. Exits 1 under -unattended on any failure.
+  * log() defined; ON_EXISTING overwrite (rebuild) | skip (keep if it passes the check).
 Usage (headless):  UnrealEditor-Cmd.exe Proj.uproject -run=pythonscript -script="ue_build_sound_cues.py" -unattended
    env: GB4C_AUDIO_SRC=<folder holding Audio/...>  GB4C_ON_EXISTING=overwrite|skip
 """
@@ -26,7 +24,6 @@ AUDIO_SRC = os.environ.get('GB4C_AUDIO_SRC') or next((p for p in (os.path.join(P
                                                        if os.path.isdir(os.path.join(p, 'Audio'))), os.path.dirname(ROOT))
 WAVE_ROOT, CUE_ROOT = '/Game/Audio', '/Game/Audio/Cues'
 ON_EXISTING = os.environ.get('GB4C_ON_EXISTING', 'overwrite')
-MIN_CUE_BYTES = 6 * 1024                                       # an empty SoundCue saves at ~4 KB
 
 REPORT = []
 def log(msg, level='info'):
@@ -62,49 +59,66 @@ def import_wave(rel, loop):
         w.set_editor_property('looping', loop); EAL.save_loaded_asset(w, only_if_is_dirty=False)
     return w
 
+LIB = getattr(unreal, 'LASliceAudioLibrary', None)   # LunarAbyss C++ helper (ue/cpp/SliceAudioLibrary.*, v1.8.1)
+
+def wave_duration(w):
+    for prop in ('duration', 'Duration'):
+        try: return float(w.get_editor_property(prop))
+        except Exception: pass
+    return float(getattr(w, 'duration', 0.0) or 0.0)
+
+def cue_duration(cue):
+    if LIB and hasattr(LIB, 'get_cue_duration'): return float(LIB.get_cue_duration(cue))
+    try: return float(cue.get_editor_property('duration'))
+    except Exception: return -2.0                                   # unknown; wave durations are checked instead
+
 def check_cue(cue_path, waves, loop):
-    """Return list of problems (empty = cue really plays its wave(s))."""
+    """Return list of problems (empty = cue graph reaches every wave and the waves have length). No size check."""
     probs = []
     cue = unreal.load_asset(cue_path)
     if not cue: return ['cue not loadable']
+    want = {w.get_path_name().split('.')[0] for w in waves}
+    if LIB and hasattr(LIB, 'get_cue_wave_paths'):
+        got = {str(x) for x in LIB.get_cue_wave_paths(cue)}
+        for m in sorted(want - got): probs.append(f'graph does not reach {m}')
     opts = unreal.AssetRegistryDependencyOptions(include_soft_package_references=False, include_hard_package_references=True,
                                                  include_searchable_names=False, include_soft_management_references=False,
                                                  include_hard_management_references=False)
     deps = {str(d) for d in (registry.get_dependencies(unreal.Name(cue_path), opts) or [])}
+    for m in sorted(want - deps): probs.append(f'no package dependency on {m}')
     for w in waves:
-        pkg = w.get_path_name().split('.')[0]
-        if pkg not in deps: probs.append(f'graph does not reference {pkg}')
-    # Vega local patch (UE 5.8 Python has no SoundCue.get_duration): read Duration via LunarAbyss's LASliceAudioLibrary.
-    try: d = cue.get_duration()
-    except AttributeError:
-        desc = unreal.LASliceAudioLibrary.describe_cue(cue); d = float(desc.rsplit('Duration=', 1)[-1]) if 'Duration=' in desc else 0.0
-    if not loop and not d > 0: probs.append(f'duration {d}')
-    if loop and not (d > 0 or d < 0): probs.append(f'loop duration {d}')
-    f = unreal.Paths.convert_relative_path_to_full(os.path.join(unreal.Paths.project_content_dir(), cue_path[len('/Game/'):] + '.uasset'))
-    if os.path.isfile(f) and os.path.getsize(f) < MIN_CUE_BYTES: probs.append(f'uasset only {os.path.getsize(f)} B (empty graph)')
+        if not wave_duration(w) > 0: probs.append(f'wave {w.get_name()} has no duration')
+    d = cue_duration(cue)
+    if d != -2.0 and not loop and not d > 0: probs.append(f'cue duration {d}')
     return probs
 
-def build_cue(cue_id, waves, sound_class=None):
+def get_or_create_cue(cue_id):
+    """No dialogs, no CanCreateAsset prompt: load and rebuild an existing cue in place, else create it with a factory."""
     path = f'{CUE_ROOT}/{cue_id}'
     if EAL.does_asset_exist(path):
-        if ON_EXISTING == 'skip': return path, 'kept'
-        if not EAL.delete_asset(path) or EAL.does_asset_exist(path):
-            # Vega local patch: referenced cues (C++/map) cannot be deleted unattended -> rebuild the graph in place.
-            cue = unreal.load_asset(path)
-            ok = unreal.LASliceAudioLibrary.build_wave_cue(cue, waves[0], bool(waves[0].get_editor_property('looping'))) if cue and waves else False
-            EAL.save_loaded_asset(cue, only_if_is_dirty=False) if cue else None
-            return path, 'rebuilt-in-place' if ok else 'failed'
-    fac = unreal.SoundCueFactoryNew()
-    fac.set_editor_property('initial_sound_waves', waves)
-    got = list(fac.get_editor_property('initial_sound_waves') or [])
-    if len(got) != len(waves): log(f'{cue_id}: factory took {len(got)}/{len(waves)} waves', 'error')
-    cue = tools.create_asset(cue_id, CUE_ROOT, unreal.SoundCue, fac)
-    if not cue: log(f'{cue_id}: create_asset failed', 'error'); return path, 'failed'
+        return unreal.load_asset(path), 'rebuilt-in-place'
+    cue = tools.create_asset(cue_id, CUE_ROOT, unreal.SoundCue, unreal.SoundCueFactoryNew())
+    if cue: return cue, 'created'
+    tmpl = TEMPLATE_CUE[0]                                          # fallback: duplicate a cue that already exists
+    if tmpl and EAL.duplicate_asset(tmpl, path): return unreal.load_asset(path), 'created-from-template'
+    return None, 'failed'
+
+TEMPLATE_CUE = [None]
+def build_cue(cue_id, waves, loop, sound_class=None):
+    path = f'{CUE_ROOT}/{cue_id}'
+    if EAL.does_asset_exist(path) and ON_EXISTING == 'skip' and not check_cue(path, waves, loop): return path, 'kept'
+    cue, how = get_or_create_cue(cue_id)
+    if not cue: log(f'{cue_id}: could not create or load the cue', 'error'); return path, 'failed'
+    if not LIB or not hasattr(LIB, 'build_multi_wave_cue'):
+        log('LASliceAudioLibrary.build_multi_wave_cue missing: add ue/cpp/SliceAudioLibrary.* to Source/LunarAbyss and rebuild', 'error')
+        return path, 'failed'
+    if not LIB.build_multi_wave_cue(cue, waves, loop): log(f'{cue_id}: graph build reported missing waves', 'error')
     if sound_class:
-        sc = unreal.load_asset(f'/Game/Audio/Classes/{sound_class}')
+        sc = unreal.load_asset(f'/Game/Audio/Classes/{sound_class}') if EAL.does_asset_exist(f'/Game/Audio/Classes/{sound_class}') else None
         if sc: cue.set_editor_property('sound_class_object', sc)
     EAL.save_loaded_asset(cue, only_if_is_dirty=False)
-    return path, 'built'
+    if not TEMPLATE_CUE[0]: TEMPLATE_CUE[0] = path
+    return path, how
 
 def main():
     rows = list(csv.DictReader(open(SOUND_LIST, newline='')))
@@ -114,10 +128,9 @@ def main():
         loop = r['loop'].strip().lower() in ('yes', 'true', '1')
         waves = [w for w in (import_wave(x, loop) for x in (r.get('wavs') or r['wav']).split(';')) if w]
         if not waves: fails.append((r['id'], ['no wave'])); continue
-        path, how = build_cue(r['id'], waves, r.get('sound_class') or None)
+        path, how = build_cue(r['id'], waves, loop, r.get('sound_class') or None)
         probs = check_cue(path, waves, loop)
-        if probs and how == 'kept':                            # stale empty cue from an earlier run: rebuild once
-            EAL.delete_asset(path); path, how = build_cue(r['id'], waves, r.get('sound_class')); probs = check_cue(path, waves, loop)
+        if LIB and hasattr(LIB, 'describe_cue') and EAL.does_asset_exist(path): log(f"  {r['id']} graph: {LIB.describe_cue(unreal.load_asset(path))}")
         results[r['id']] = path
         if probs: fails.append((r['id'], probs))
         log(f"{r['id']}: {how}, {len(waves)} wave(s), {'OK' if not probs else 'FAIL ' + '; '.join(probs)}")

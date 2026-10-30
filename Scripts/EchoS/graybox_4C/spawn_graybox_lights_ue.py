@@ -54,12 +54,14 @@ def is_unattended():
 
 # Baseline (non-RT, mid-range) profile. The same values ship in C4C_Baseline_DeviceProfile.ini.
 BASELINE_CVARS = [
-    'r.MegaLights.Allow 0', 'r.RayTracing.Enable 0', 'r.Lumen.HardwareRayTracing 0',
+    'r.MegaLights.Allowed 0', 'r.MegaLights.EnableForProject 0', 'r.RayTracing.Enable 0', 'r.Lumen.HardwareRayTracing 0',
     'r.DynamicGlobalIlluminationMethod 1', 'r.ReflectionMethod 1', 'r.Shadow.Virtual.Enable 1',
     'r.Shadow.Virtual.MaxPhysicalPages 2048', 'r.LightFunctionAtlas 0',
 ]
-HIGH_CVARS = ['r.MegaLights.Allow 1', 'r.RayTracing.Enable 1', 'r.Lumen.HardwareRayTracing 1', 'r.LightFunctionAtlas 1']
+HIGH_CVARS = ['r.MegaLights.Allowed 1', 'r.MegaLights.EnableForProject 1', 'r.RayTracing.Enable 1', 'r.Lumen.HardwareRayTracing 1', 'r.LightFunctionAtlas 1']
 def apply_profile(path):
+    # UE 5.8: r.MegaLights.Allow does not exist ("deferred - dummy variable"). Allowed = scalability/device-profile gate,
+    # EnableForProject = project default (Project Settings > Rendering > Direct Lighting > MegaLights).
     for c in (HIGH_CVARS if path == 'high' else BASELINE_CVARS):
         unreal.SystemLibrary.execute_console_command(None, c)
     log(f'profile {path}: ' + ', '.join(HIGH_CVARS if path == 'high' else BASELINE_CVARS))

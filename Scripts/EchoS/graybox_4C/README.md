@@ -11,7 +11,7 @@
 | `tools/` | `build_graybox_lights.py` (rebuilds the JSON/CSV/presets/budget), `render_previews_blender.py`, `build_sound_list.py`. |
 
 ## Render paths
-- **Baseline (default, mid-range GPU, no ray tracing):** MegaLights off (`r.MegaLights.Allow 0`), no HWRT. Only `shadow_baseline` lights cast shadows: 157 of 653 (main fixtures only; every 4th corridor panel, max 3 per room, 6 high-bays + 2 floods in the hangar), each with a 25 m shadow draw distance. Battle reds, emergency lights and beacons never cast in the baseline. Lumen software RT (High) or Lumen Lite (Medium). Flicker from the flicker subsystem, not light functions.
+- **Baseline (default, mid-range GPU, no ray tracing):** MegaLights off (`r.MegaLights.Allowed 0`), no HWRT. Only `shadow_baseline` lights cast shadows: 157 of 653 (main fixtures only; every 4th corridor panel, max 3 per room, 6 high-bays + 2 floods in the hangar), each with a 25 m shadow draw distance. Battle reds, emergency lights and beacons never cast in the baseline. Lumen software RT (High) or Lumen Lite (Medium). Flicker from the flicker subsystem, not light functions.
 - **High (optional):** MegaLights + hardware RT; `shadow_high` lights cast (main, task, emergency); Light Function Atlas on.
 - Budget method (`budget_check.json`): own space + open-connected corridors in full + at most one caster per door-connected room. Re-check in the editor with `stat lights` / `r.Shadow.Virtual` visualisation once the level is assembled.
 
@@ -29,10 +29,15 @@ Matte practical fixtures only (Kit housings `SM_Fixture_*`, `M_FixtureLens` driv
 ## v1.8 (realism pass + UE script fixes)
 - `C4C_GrayboxLights.json/.csv`: 664 lights with physical intensities. Each light has `lux_floor_direct`; the targets are in spec §11.1.
 - `C4C_MaterialRealism.json`: albedo, roughness and metallic ranges, plus grime and edge-wear layers.
-- `C4C_Baseline_DeviceProfile.ini`: the baseline non-RT profile (`r.MegaLights.Allow=0`) and the High profile.
+- `C4C_Baseline_DeviceProfile.ini`: the baseline non-RT profile (`r.MegaLights.Allowed=0`) and the High profile.
 - `C4C_GravityAudioMap.json`: maps `OnGravityStateChanged` events and notifies to the gravity cues.
 - `ue/ue_build_sound_cues.py`: builds the cues through `initial_sound_waves` and verifies them (AssetRegistry dependencies, duration, size); exits 1 on failure.
 - `ue/ue_add_lights_and_sounds.py`: unattended runner for IES, cues, baseline lights and save.
   `UnrealEditor-Cmd.exe <proj> -run=pythonscript -script="<path>/ue/ue_add_lights_and_sounds.py" -unattended`
   Environment variables: `GB4C_ON_EXISTING=overwrite|skip`, `GB4C_AUDIO_SRC`, `GB4C_IES_SRC`, `GB4C_MAP`.
 - `spawn_graybox_lights_ue.py`: no socket reads, `log()` defined, `main(..., on_existing='overwrite'|'skip')`; the baseline applies its cvars.
+
+## v1.8.1 (fixes after playtest_03)
+- `ue/cpp/SliceAudioLibrary.h/.cpp`: drop-in replacement for `Source/LunarAbyss/SliceAudioLibrary.*`. It adds `BuildMultiWaveCue`, `GetCueWavePaths` and `GetCueDuration`, so rebuild the editor target before running the cue script.
+- `ue/ue_build_sound_cues.py`: rebuilds each cue in place, or creates it with `create_asset` and a factory, with no dialogs. Multi-wave cues use a Random node with every wave wired. The size check is gone.
+- MegaLights cvar: `r.MegaLights.Allowed=0` (device profile) plus `r.MegaLights.EnableForProject=0` (`DefaultEngine.ini`).
