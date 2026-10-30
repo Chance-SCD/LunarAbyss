@@ -11,6 +11,7 @@
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
 #include "SliceTuning.h"
+#include "LadderVolume.h"
 
 namespace { constexpr float M = 100.f; }
 
@@ -50,6 +51,8 @@ void ACrewCharacter::BeginPlay()
 			JumpGravityExponent = R->JumpGravityExponent;
 			IndoorJumpHeightCapM = R->IndoorJumpHeightCapM;
 			MagBootBelowG = R->MagBootBelowG;
+			WalkSpeed = R->WalkSpeed; JogSpeed = R->JogSpeed; CrouchSpeed = R->CrouchSpeed; SprintSpeed = R->SprintSpeed;
+			UpdateSpeeds();
 		}
 	}
 }
@@ -57,7 +60,7 @@ void ACrewCharacter::BeginPlay()
 void ACrewCharacter::UpdateSpeeds()
 {
 	UCharacterMovementComponent* Move = GetCharacterMovement();
-	Move->MaxWalkSpeed = (bWalking ? WalkSpeed : JogSpeed) * M;
+	Move->MaxWalkSpeed = (bSprinting ? SprintSpeed : (bWalking ? WalkSpeed : JogSpeed)) * M;
 	Move->MaxWalkSpeedCrouched = CrouchSpeed * M;
 }
 
@@ -76,6 +79,7 @@ void ACrewCharacter::BuildInput()
 	JumpAction   = MakeAction(TEXT("IA_Jump"), EInputActionValueType::Boolean);
 	CrouchAction = MakeAction(TEXT("IA_Crouch"), EInputActionValueType::Boolean);
 	WalkAction   = MakeAction(TEXT("IA_Walk"), EInputActionValueType::Boolean);
+	SprintAction = MakeAction(TEXT("IA_Sprint"), EInputActionValueType::Boolean);
 
 	FootContext = NewObject<UInputMappingContext>(this, TEXT("IMC_OnFoot"));
 	auto Map = [this](UInputAction* A, FKey Key, bool bNegate, bool bSwizzle)
@@ -95,6 +99,7 @@ void ACrewCharacter::BuildInput()
 	Map(JumpAction, EKeys::SpaceBar, false, false);
 	Map(CrouchAction, EKeys::C, false, false);
 	Map(WalkAction, EKeys::LeftAlt, false, false);
+	Map(SprintAction, EKeys::LeftShift, false, false);
 }
 
 void ACrewCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -116,11 +121,14 @@ void ACrewCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACrewCharacter::OnJump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACrewCharacter::OnCrouchToggle);
 	EIC->BindAction(WalkAction, ETriggerEvent::Started, this, &ACrewCharacter::OnWalkToggle);
+	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &ACrewCharacter::OnSprintStart);
+	EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &ACrewCharacter::OnSprintStop);
 }
 
 void ACrewCharacter::OnMove(const FInputActionValue& V)
 {
 	const FVector2D In = V.Get<FVector2D>();
+	if (Ladder || LadderCooldown) { LadderInput = In.Y; if (Ladder) return; }
 	if (bZeroG)
 	{
 		// Weak push-off along the full view direction.
@@ -129,6 +137,9 @@ void ACrewCharacter::OnMove(const FInputActionValue& V)
 		AddMovementInput(FRotationMatrix(View).GetUnitAxis(EAxis::Y), In.X);
 		return;
 	}
+	// Sprint only while pushing forward (not strafing/backing), standing and not crouched.
+	const bool bWantSprint = bSprintHeld && In.Y > 0.5f && FMath::Abs(In.X) < 0.5f && !bIsCrouched;
+	if (bWantSprint != bSprinting) { bSprinting = bWantSprint; UpdateSpeeds(); }
 	const FRotator Yaw(0.f, GetControlRotation().Yaw, 0.f);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::X), In.Y);
 	AddMovementInput(FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y), In.X);
@@ -143,12 +154,13 @@ void ACrewCharacter::OnLook(const FInputActionValue& V)
 
 void ACrewCharacter::OnUpDown(const FInputActionValue& V)
 {
+	if (Ladder) { LadderInput = V.Get<float>(); return; }
 	if (bZeroG) AddMovementInput(FVector::UpVector, V.Get<float>());
 }
 
 void ACrewCharacter::OnJump(const FInputActionValue&)
 {
-	if (!bZeroG) Jump();
+	if (!bZeroG && !Ladder) Jump(); // cannot jump off mid-shaft
 }
 
 void ACrewCharacter::OnCrouchToggle(const FInputActionValue&)
@@ -165,7 +177,7 @@ void ACrewCharacter::OnWalkToggle(const FInputActionValue&)
 
 void ACrewCharacter::EnterZeroG()
 {
-	if (bZeroG) return;
+	if (bZeroG || Ladder) return;
 	bZeroG = true;
 	bTrackingFall = false;
 	if (bIsCrouched) UnCrouch();
@@ -197,6 +209,8 @@ void ACrewCharacter::StartFall()
 
 void ACrewCharacter::SetShipGravityScale(float Scale)
 {
+	ShipGravity = Scale;
+	if (Ladder) return; // ladder drives movement itself
 	if (!bZeroG) GetCharacterMovement()->GravityScale = Scale;
 }
 
@@ -212,7 +226,11 @@ void ACrewCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8
 void ACrewCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (Ladder) TickLadder(DeltaSeconds);
+	else if (LadderCooldown && LadderInput > 0.5f && GetCharacterMovement()->IsMovingOnGround()) EnterLadder(LadderCooldown); // climb back up from the bottom
+	if (!Ladder) LadderInput = 0.f;
 	if (bTrackingFall) FallApexZ = FMath::Max(FallApexZ, GetActorLocation().Z);
+	if (bSprinting && GetLastMovementInputVector().IsNearlyZero()) { bSprinting = false; UpdateSpeeds(); }
 	// Jump: v0 from BaseJumpHeightM at 1 g, scaled by (g / 9.81)^exp with current gravity; apex capped indoors.
 	UCharacterMovementComponent* Move = GetCharacterMovement();
 	const float GMs2 = FMath::Max(FMath::Abs(Move->GetGravityZ()) / M, 0.01f);
@@ -245,4 +263,77 @@ float ACrewCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	const float D = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	Health = FMath::Max(0.f, Health - D);
 	return D;
+}
+
+// ---------------- Ladder ----------------
+void ACrewCharacter::LadderOverlapBegin(ALadderVolume* L)
+{
+	if (!L || Ladder || LadderCooldown == L) return;
+	EnterLadder(L);
+}
+
+void ACrewCharacter::LadderOverlapEnd(ALadderVolume* L)
+{
+	if (LadderCooldown == L) LadderCooldown = nullptr;
+	if (Ladder == L) ExitLadder(false);
+}
+
+void ACrewCharacter::EnterLadder(ALadderVolume* L)
+{
+	Ladder = L; LadderCooldown = nullptr;
+	bZeroG = false;              // the shaft handles zero-g itself
+	bTrackingFall = false;       // no free fall in a caged ladder -> no fall damage
+	if (bIsCrouched) UnCrouch();
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	Move->GravityScale = 0.f;
+	Move->BrakingDecelerationFlying = 0.f;
+	Move->SetMovementMode(MOVE_Flying);
+	Move->Velocity = FVector::ZeroVector;
+	LadderZeroGVz = 0.f;
+	UE_LOG(LogTemp, Log, TEXT("Ladder: on %s"), *L->GetName());
+}
+
+void ACrewCharacter::ExitLadder(bool bTop)
+{
+	ALadderVolume* L = Ladder;
+	Ladder = nullptr; LadderCooldown = L;
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	Move->Velocity = FVector::ZeroVector;
+	Move->GravityScale = ShipGravity;
+	if (bTop && L)
+	{
+		const float Half = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		SetActorLocation(L->GetTopExitWorld() + FVector(0, 0, Half + 2.f), false, nullptr, ETeleportType::TeleportPhysics);
+	}
+	bTrackingFall = false;
+	Move->SetMovementMode(ShipGravity > 0.f ? MOVE_Walking : MOVE_Flying);
+	if (ShipGravity <= 0.f) { bZeroG = false; EnterZeroG(); }
+	UE_LOG(LogTemp, Log, TEXT("Ladder: off at %s"), bTop ? TEXT("top") : TEXT("bottom"));
+}
+
+void ACrewCharacter::TickLadder(float Dt)
+{
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	if (Move->MovementMode != MOVE_Flying) Move->SetMovementMode(MOVE_Flying);
+	Move->GravityScale = 0.f;
+	const float Half = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const float Feet = GetActorLocation().Z - Half;
+	float Vz;
+	if (ShipGravity <= 0.001f)
+	{
+		// Zero-g: float, push slowly along the shaft; keep drift.
+		LadderZeroGVz = FMath::Clamp(LadderZeroGVz + LadderInput * 0.6f * M * Dt, -Ladder->ZeroGPushSpeed * M, Ladder->ZeroGPushSpeed * M);
+		Vz = LadderZeroGVz;
+	}
+	else
+	{
+		LadderZeroGVz = 0.f;
+		Vz = LadderInput > 0.1f ? Ladder->ClimbSpeed * M : -Ladder->SlideSpeed * M; // release = slide down 2 m/s
+	}
+	// Hold the capsule on the shaft axis.
+	FVector ToAxis = Ladder->GetShaftCentre() - GetActorLocation(); ToAxis.Z = 0.f;
+	Move->Velocity = FVector(ToAxis.X, ToAxis.Y, 0.f) * 5.f + FVector(0, 0, Vz);
+	LadderInput = 0.f; // input re-triggers every frame while held; release => slide
+	if (Vz < 0.f && Feet <= Ladder->BottomFloorZ + 3.f) { ExitLadder(false); return; }
+	if (Vz > 0.f && Feet >= Ladder->TopFloorZ + 2.f) { ExitLadder(true); return; }
 }

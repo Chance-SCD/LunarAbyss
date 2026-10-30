@@ -1,2 +1,2 @@
----,BaseJumpHeightM,JumpGravityExponent,IndoorJumpHeightCapM,MagBootBelowG
-Default,0.6,0.25,1.4,0.1
+---,WalkSpeed,JogSpeed,CrouchSpeed,SprintSpeed,LadderSlideSpeed,LadderClimbSpeed,LadderZeroGPushSpeed,BaseJumpHeightM,JumpGravityExponent,IndoorJumpHeightCapM,MagBootBelowG
+Default,1.25,3.0,1.0,5.5,2.0,0.6,0.3,0.6,0.25,1.4,0.1

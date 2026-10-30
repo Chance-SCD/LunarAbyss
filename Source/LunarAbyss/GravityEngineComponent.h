@@ -5,7 +5,12 @@
 #include "GravityEngineComponent.generated.h"
 
 class ACrewCharacter;
+class USoundBase;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGravityStateChanged, bool, bNowOnline);
+
+UENUM(BlueprintType)
+enum class EGravityState : uint8 { On, Failing, Off, Restoring };
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGravityStateChanged, EGravityState, OldState, EGravityState, NewState);
 
 /**
  * Ship gravity engine. Online: crew inside walk normally. Offline (HP 0 or toggled): crew inside float
@@ -45,6 +50,16 @@ public:
 	UPROPERTY(Transient) TObjectPtr<UPrimitiveComponent> InteriorBoundsComponent;
 
 	UPROPERTY(BlueprintAssignable, Category = "Gravity") FGravityStateChanged OnGravityChanged;
+	UPROPERTY(BlueprintAssignable, Category = "Gravity") FOnGravityStateChanged OnGravityStateChanged;
+	UFUNCTION(BlueprintPure, Category = "Gravity") EGravityState GetGravityState() const { return State; }
+
+	/** Echo-S C4C_SoundList: SND_4C_GRV_001 (-> Off/Failing), SND_4C_GRV_002 (Restoring -> On), SND_4C_GRV_003 (PA, -> Off once per outage). */
+	UPROPERTY(EditAnywhere, Category = "Gravity|Audio") TSoftObjectPtr<USoundBase> SpinDownSound;
+	UPROPERTY(EditAnywhere, Category = "Gravity|Audio") TSoftObjectPtr<USoundBase> SpinUpSound;
+	UPROPERTY(EditAnywhere, Category = "Gravity|Audio") TSoftObjectPtr<USoundBase> PAGravityLossSound;
+	/** Ship-wide 2D layer volume (-6 dB) plus a 3D copy at the gravity engine socket. */
+	UPROPERTY(EditAnywhere, Category = "Gravity|Audio") float ShipWideVolume = 0.5f;
+	UPROPERTY(EditAnywhere, Category = "Gravity|Audio") FName EngineSocket = TEXT("Reactor_Core");
 
 private:
 	UFUNCTION() void HandleAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
@@ -52,5 +67,9 @@ private:
 	void ApplyStateTo(ACrewCharacter* C, bool bJustChanged);
 
 	float GravityAlpha = 1.f;
+	EGravityState State = EGravityState::On;
+	bool bPAPlayedThisOutage = false;
+	void SetState(EGravityState NewState);
+	void PlayGravitySound(const TSoftObjectPtr<USoundBase>& Sound, bool bWithShipWide);
 	TSet<TWeakObjectPtr<ACrewCharacter>> Floating; // crew currently in zero-g from us
 };

@@ -6,6 +6,7 @@
 #include "EngineUtils.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystems.h"
+#include "SlicePlaytest.h"
 
 void ALunarAbyssPlayerController::SetupInputComponent()
 {
@@ -13,6 +14,7 @@ void ALunarAbyssPlayerController::SetupInputComponent()
 	InputComponent->BindKey(EKeys::F, IE_Pressed, this, &ALunarAbyssPlayerController::OnInteract);
 	InputComponent->BindKey(EKeys::L, IE_Pressed, this, &ALunarAbyssPlayerController::LaunchFighter);
 	InputComponent->BindKey(EKeys::G, IE_Pressed, this, &ALunarAbyssPlayerController::ToggleGravity);
+	InputComponent->BindKey(EKeys::H, IE_Pressed, this, &ALunarAbyssPlayerController::ToggleHangarDoors);
 }
 
 void ALunarAbyssPlayerController::OnPossess(APawn* InPawn)
@@ -64,7 +66,7 @@ void ALunarAbyssPlayerController::OnInteract()
 			{
 				// Pilot seat: take the fighter straight out of the bay.
 				AFighterPawn* F = FindFighter();
-				if (F && F == V->GetParkedFighter()) V->LaunchFighter(F);
+				if (F && F == V->GetParkedFighter()) V->RequestLaunch(F);
 				PossessFighter(F);
 				return;
 			}
@@ -90,13 +92,23 @@ void ALunarAbyssPlayerController::LaunchFighter()
 	ACorvetteHangar* V = FindCorvette();
 	AFighterPawn* F = FindFighter();
 	if (!V || !F) return;
-	V->LaunchFighter(F);
+	V->RequestLaunch(F); // opens doors first (horn 1 s + 5.4 s), launches, closes 8 s later
 	if (GetPawn() != F) PossessFighter(F);
 }
 
 void ALunarAbyssPlayerController::ToggleGravity()
 {
 	if (ACorvetteHangar* V = FindCorvette()) V->GravityEngine->Toggle();
+}
+
+void ALunarAbyssPlayerController::RunSlicePlaytest()
+{
+	if (ASlicePlaytest* T = GetWorld()->SpawnActor<ASlicePlaytest>()) T->Start(this);
+}
+
+void ALunarAbyssPlayerController::ToggleHangarDoors()
+{
+	if (ACorvetteHangar* V = FindCorvette()) V->ToggleHangarDoors();
 }
 
 void ALunarAbyssPlayerController::DamageGravity(float Amount)

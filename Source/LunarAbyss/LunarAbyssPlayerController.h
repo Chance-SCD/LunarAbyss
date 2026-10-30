@@ -23,6 +23,11 @@ public:
 	UFUNCTION(Exec) void SwitchToCrew();
 	UFUNCTION(Exec) void LaunchFighter();
 	UFUNCTION(Exec) void ToggleGravity();
+	UFUNCTION(Exec) void ToggleHangarDoors();
+	/** Same handler as the F key (used by the automated play test). */
+	UFUNCTION(Exec) void PressF() { OnInteract(); }
+	/** Runs the scripted slice play test (ASlicePlaytest), writes Saved/Playtest/results.txt, then quits. */
+	UFUNCTION(Exec) void RunSlicePlaytest();
 	UFUNCTION(Exec) void DamageGravity(float Amount);
 	UFUNCTION(Exec) void SetCorvetteSpeed(float MetresPerSecond);
 

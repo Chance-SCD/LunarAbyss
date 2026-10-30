@@ -31,6 +31,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Flight") bool IsParked() const { return bParked; }
 	/** Ignore collisions with Other for Seconds (used when launching out of the bay). */
 	void IgnoreActorForSeconds(AActor* Other, float Seconds);
+	/** Flight assist is suspended (Newtonian coast) for this long, e.g. right after a hangar launch. */
+	void SuspendAssist(float Seconds) { AssistSuspendTime = Seconds; }
+	UFUNCTION(BlueprintCallable, Category = "Flight") void SetCockpitView(bool bCockpit);
+	/** Test hook: sets the throttle axis as if W/S were held (-1..1). */
+	UFUNCTION(BlueprintCallable, Category = "Flight") void SetThrottleInput(float V) { InThrottle = V; }
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight") int32 NumBlockingHits = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flight") FString LastHitComponent;
 
 	/** World velocity in cm/s (Unreal units). */
 	UFUNCTION(BlueprintCallable, Category = "Flight")
@@ -90,4 +97,5 @@ private:
 	bool bBoost = false;
 	bool bCockpitView = false;
 	bool bParked = false;
+	float AssistSuspendTime = 0.f;
 };

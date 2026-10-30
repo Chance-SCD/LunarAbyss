@@ -9,6 +9,7 @@
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
+class ALadderVolume;
 
 /** First-person on-foot crew. Speeds in m/s: walk 1.25, jog 3.0, crouch 1.0. Zero-g handled by UGravityEngineComponent. */
 UCLASS()
@@ -33,6 +34,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Speed") float WalkSpeed = 1.25f;   // m/s
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Speed") float JogSpeed = 3.0f;     // m/s
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Speed") float CrouchSpeed = 1.0f;  // m/s
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|Speed") float SprintSpeed = 5.5f;  // m/s, Left Shift, forward only
 	/** Zero-g push-off: max drift speed and acceleration from input, m/s and m/s^2. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|ZeroG") float ZeroGMaxSpeed = 1.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crew|ZeroG") float ZeroGPushAccel = 0.6f;
@@ -54,6 +56,13 @@ public:
 	/** Stub: true when gravity < MagBootBelowG (no gameplay effect yet). */
 	UFUNCTION(BlueprintPure, Category = "Crew") bool IsMagBootMode() const { return bMagBootMode; }
 	virtual void BeginPlay() override;
+
+	// ---- Ladder (QA-136) ----
+	void LadderOverlapBegin(ALadderVolume* L);
+	void LadderOverlapEnd(ALadderVolume* L);
+	UFUNCTION(BlueprintPure, Category = "Crew") bool IsOnLadder() const { return Ladder != nullptr; }
+	/** Test hook: ladder axis input (+1 climb, 0 release). */
+	void SetLadderInput(float V) { LadderInput = V; }
 	/** Set by the gravity engine while it is ramping back in (restore). */
 	void SetGravityRestoring(bool b) { bGravityRestoring = b; }
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Crew|Health") float Health = 140.f;
@@ -77,6 +86,11 @@ private:
 	UPROPERTY() TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY() TObjectPtr<UInputAction> CrouchAction;
 	UPROPERTY() TObjectPtr<UInputAction> WalkAction;
+	UPROPERTY() TObjectPtr<UInputAction> SprintAction;
+	void OnSprintStart(const FInputActionValue&) { bSprintHeld = true; }
+	void OnSprintStop(const FInputActionValue&) { bSprintHeld = false; bSprinting = false; UpdateSpeeds(); }
+	bool bSprintHeld = false;
+	bool bSprinting = false;
 
 	bool bZeroG = false;
 	bool bWalking = false;
@@ -84,6 +98,14 @@ private:
 	bool bFallStartedLowG = false;
 	bool bGravityRestoring = false;
 	bool bIndoors = false;
+	UPROPERTY() TObjectPtr<ALadderVolume> Ladder;
+	UPROPERTY() TObjectPtr<ALadderVolume> LadderCooldown; // just exited this one; re-grab needs up input or leaving it
+	float LadderInput = 0.f;
+	float ShipGravity = 1.f;
+	float LadderZeroGVz = 0.f;
+	void EnterLadder(ALadderVolume* L);
+	void ExitLadder(bool bTop);
+	void TickLadder(float Dt);
 	bool bMagBootMode = false;
 	void StartFall();
 	bool bTrackingFall = false;

@@ -35,7 +35,7 @@ AFighterPawn::AFighterPawn()
 	Hull = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Hull"));
 	RootComponent = Hull;
 	Hull->SetSimulatePhysics(false);
-	Hull->SetCollisionProfileName(TEXT("Pawn"));
+	Hull->SetCollisionProfileName(TEXT("Spacecraft")) /* blocks ShipHull (4C exterior UCX) */;
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	if (Cube.Succeeded())
 	{
@@ -198,7 +198,12 @@ void AFighterPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AFighterPawn::OnToggleCamera(const FInputActionValue&)
 {
-	bCockpitView = !bCockpitView;
+	SetCockpitView(!bCockpitView);
+}
+
+void AFighterPawn::SetCockpitView(bool bCockpit)
+{
+	bCockpitView = bCockpit;
 	ChaseCamera->SetActive(!bCockpitView);
 	CockpitCamera->SetActive(bCockpitView);
 }
@@ -223,7 +228,8 @@ void AFighterPawn::Tick(float DeltaSeconds)
 	const FVector AccelLocal = FVector(ForwardAccel * AccelMul, StrafeAccel, StrafeAccel) * M; // cm/s^2
 	const FVector Cmd(InThrottle, InStrafe, InLift);
 
-	if (bFlightAssist)
+	if (AssistSuspendTime > 0.f) AssistSuspendTime -= Dt;
+	if (bFlightAssist && AssistSuspendTime <= 0.f)
 	{
 		// Drive local velocity toward commanded velocity; unwanted components are damped.
 		const FVector LocalVel = Q.UnrotateVector(LinearVelocity);
@@ -241,6 +247,8 @@ void AFighterPawn::Tick(float DeltaSeconds)
 	AddActorWorldOffset(LinearVelocity * Dt, true, &Hit);
 	if (Hit.bBlockingHit)
 	{
+		++NumBlockingHits;
+		LastHitComponent = Hit.GetComponent() ? Hit.GetComponent()->GetName() : TEXT("?");
 		LinearVelocity = FVector::VectorPlaneProject(LinearVelocity, Hit.Normal) * 0.5f;
 	}
 }

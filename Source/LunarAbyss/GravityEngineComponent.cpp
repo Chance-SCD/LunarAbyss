@@ -2,10 +2,52 @@
 #include "CrewCharacter.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "Components/StaticMeshComponent.h"
 
 UGravityEngineComponent::UGravityEngineComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	SpinDownSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(TEXT("/Game/Audio/Cues/SND_4C_GRV_001.SND_4C_GRV_001")));
+	SpinUpSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(TEXT("/Game/Audio/Cues/SND_4C_GRV_002.SND_4C_GRV_002")));
+	PAGravityLossSound = TSoftObjectPtr<USoundBase>(FSoftObjectPath(TEXT("/Game/Audio/Cues/SND_4C_GRV_003.SND_4C_GRV_003")));
+}
+
+void UGravityEngineComponent::PlayGravitySound(const TSoftObjectPtr<USoundBase>& Sound, bool bWithShipWide)
+{
+	USoundBase* S = Sound.LoadSynchronous();
+	if (!S || !GetWorld()) return;
+	FVector Loc = GetOwner()->GetActorLocation();
+	if (const UStaticMeshComponent* Int = Cast<UStaticMeshComponent>(InteriorBoundsComponent.Get()))
+	{
+		if (Int->DoesSocketExist(EngineSocket)) Loc = Int->GetSocketLocation(EngineSocket);
+	}
+	UGameplayStatics::PlaySoundAtLocation(this, S, Loc);
+	if (bWithShipWide) UGameplayStatics::PlaySound2D(this, S, ShipWideVolume);
+}
+
+void UGravityEngineComponent::SetState(EGravityState NewState)
+{
+	if (NewState == State) return;
+	const EGravityState Old = State;
+	State = NewState;
+	UE_LOG(LogTemp, Log, TEXT("Gravity state %d -> %d"), (int32)Old, (int32)NewState);
+	if (NewState == EGravityState::Failing || (NewState == EGravityState::Off && Old != EGravityState::Failing))
+	{
+		PlayGravitySound(SpinDownSound, true);
+	}
+	if (NewState == EGravityState::Off && !bPAPlayedThisOutage)
+	{
+		bPAPlayedThisOutage = true;
+		PlayGravitySound(PAGravityLossSound, true);
+	}
+	if (NewState == EGravityState::Restoring)
+	{
+		PlayGravitySound(SpinUpSound, true); // 6 s spin-up covers the 1.5 s ramp
+	}
+	if (NewState == EGravityState::On) bPAPlayedThisOutage = false;
+	OnGravityStateChanged.Broadcast(Old, NewState);
 }
 
 void UGravityEngineComponent::BeginPlay()
@@ -68,6 +110,7 @@ bool UGravityEngineComponent::IsInside(const AActor* A) const
 void UGravityEngineComponent::ApplyStateTo(ACrewCharacter* C, bool bJustChanged)
 {
 	UCharacterMovementComponent* Move = C->GetCharacterMovement();
+	if (C->IsOnLadder()) return; // ladder handles zero-g / restore itself (QA-136)
 	if (!bOnline)
 	{
 		if (!Floating.Contains(C))
@@ -97,6 +140,8 @@ void UGravityEngineComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		GravityAlpha = RampOutTime > 0.f ? FMath::Max(0.f, GravityAlpha - DeltaTime / RampOutTime) : 0.f;
 	}
 	const bool bZeroG = !bOnline && GravityAlpha <= 0.f;
+	SetState(bOnline ? (GravityAlpha < 1.f ? EGravityState::Restoring : EGravityState::On)
+	                 : (GravityAlpha > 0.f ? EGravityState::Failing : EGravityState::Off));
 
 	for (TActorIterator<ACrewCharacter> It(GetWorld()); It; ++It)
 	{
