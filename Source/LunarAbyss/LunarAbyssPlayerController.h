@@ -22,6 +22,8 @@ public:
 	UFUNCTION(Exec) void SwitchToFighter();
 	UFUNCTION(Exec) void SwitchToCrew();
 	UFUNCTION(Exec) void LaunchFighter();
+	/** QA-140: LockHatch 1 / 0 sets the DCD-77 pressure lock. */
+	UFUNCTION(Exec) void LockHatch(int32 bLocked);
 	UFUNCTION(Exec) void ToggleGravity();
 	UFUNCTION(Exec) void ToggleHangarDoors();
 	/** Same handler as the F key (used by the automated play test). */

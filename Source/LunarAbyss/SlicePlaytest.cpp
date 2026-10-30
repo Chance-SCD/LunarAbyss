@@ -13,13 +13,16 @@
 #include "UnrealClient.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LadderVolume.h"
+#include "EngineUtils.h"
 
 namespace
 {
 	constexpr float M = 100.f;
 	// ST-F switchback (Atlas-V blend, ship metres): aft landing X 30.8, forward mid-landing X 32.9; lane A Y 6.4, lane B Y 7.8.
-	const FVector2D DownLoop[4] = { {30.8, 6.4}, {32.9, 6.4}, {32.9, 7.8}, {30.8, 7.8} };
-	const FVector2D UpLoop[4]   = { {30.8, 7.8}, {32.9, 7.8}, {32.9, 6.4}, {30.8, 6.4} };
+	// QA-141: ST-F from Atlas-V's UCX (Blender m). Deck landings at the fore end X 30.41..31.70, mid landings at the aft end
+	// X 34.70..36.01; flights run aft in lane A (Y 5.80..7.05) and fore in lane B (Y 7.15..8.40) going down. 8 flights D5->D2.
+	const FVector2D DownLoop[4] = { {31.05, 6.43}, {35.35, 6.43}, {35.35, 7.78}, {31.05, 7.78} };
+	const FVector2D UpLoop[4]   = { {31.05, 7.78}, {35.35, 7.78}, {35.35, 6.43}, {31.05, 6.43} };
 	const float FallHeights[4] = { 2.f, 4.f, 6.f, 9.f };
 }
 
@@ -64,7 +67,7 @@ bool ASlicePlaytest::WalkTo(const FVector2D& T, float Dt)
 {
 	const FVector Goal = ShipToWorld(FVector(T.X, T.Y, 0));
 	FVector D = Goal - Crew->GetActorLocation(); D.Z = 0;
-	if (D.Size() < 25.f) return true;
+	if (D.Size() < 30.f) return true;
 	Crew->AddMovementInput(D.GetSafeNormal(), 1.f);
 	return false;
 }
@@ -106,9 +109,9 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		break;
 
 	case 1: // Stairs down D5 -> D2
-		if (SubStep == 0) { TeleportCrew(FVector(30.8, 6.4, 22.97), 0.f); Waypoint = 0; SubStep = 1; LogTimer = 0; Z0 = FeetZm; StepTime = -0.5f; break; }
+		if (SubStep == 0) { TeleportCrew(FVector(31.05, 6.43, 22.97), 0.f); Waypoint = 0; SubStep = 1; LogTimer = 0; Z0 = FeetZm; StepTime = -0.5f; break; }
 		if ((LogTimer += DeltaSeconds) > 1.f) { LogTimer = 0; Log(FString::Printf(TEXT("stairs down: feet Z %.2f m, wp %d"), FeetZm, Waypoint)); }
-		if (Waypoint == 6 && !Shots.Contains(TEXT("02_stairs_down.png"))) Shot(TEXT("02_stairs_down"));
+		if (Waypoint == 3 && !Shots.Contains(TEXT("02_stairs_down.png"))) Shot(TEXT("02_stairs_down"));
 		if (WalkTo(DownLoop[Waypoint % 4], DeltaSeconds)) Waypoint++;
 		if (FeetZm < 9.67f + 0.15f || StepTime > 90.f)
 		{
@@ -118,8 +121,9 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		break;
 
 	case 2: // Stairs up D2 -> D5
-		if (SubStep == 0) { TeleportCrew(FVector(30.8, 7.8, 9.67), 0.f); Waypoint = 0; SubStep = 1; LogTimer = 0; Z0 = FeetZm; StepTime = -0.5f; break; }
+		if (SubStep == 0) { TeleportCrew(FVector(31.05, 7.78, 9.67), 0.f); Waypoint = 0; SubStep = 1; LogTimer = 0; Z0 = FeetZm; StepTime = -0.5f; break; }
 		if ((LogTimer += DeltaSeconds) > 1.f) { LogTimer = 0; Log(FString::Printf(TEXT("stairs up: feet Z %.2f m, wp %d"), FeetZm, Waypoint)); }
+		if (Waypoint == 5 && !Shots.Contains(TEXT("02b_stairs_up.png"))) Shot(TEXT("02b_stairs_up"));
 		if (WalkTo(UpLoop[Waypoint % 4], DeltaSeconds)) Waypoint++;
 		if (FeetZm > 22.97f - 0.15f || StepTime > 120.f)
 		{
@@ -169,9 +173,13 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		{
 			const float Dmg = H0 - Crew->Health;
 			const float Hd = FallStartFeet - FeetZm; // actual drop of the feet
-			const float Expect = Hd > 3.f ? 15.f * (Hd - 3.f) : 0.f; // v^2/2g = h for a free fall from rest
-			Result(FString::Printf(TEXT("Fall %.0f m (expect %.1f HP)"), Hm, Expect), FMath::Abs(Dmg - Expect) <= FMath::Max(1.5f, Expect * 0.06f),
-				FString::Printf(TEXT("drop %.2f m, damage %.1f HP, landed feet %.2f m"), Hd, Dmg, FeetZm));
+			// QA-142: impact speed from the last airborne frame -> equivalent drop v^2/2g must match the real drop within 0.1 m;
+			// damage must equal 15 x (equiv - 3) for equiv > 3.
+			const float Eq = Crew->LastEquivDropM;
+			const float Expect = Eq > 3.f ? 15.f * (Eq - 3.f) : 0.f;
+			const float ExpectFromDrop = Hd > 3.f ? 15.f * (Hd - 3.f) : 0.f;
+			Result(FString::Printf(TEXT("Fall %.0f m (drop vs v^2/2g within 0.1 m)"), Hm), FMath::Abs(Eq - Hd) <= 0.1f && FMath::Abs(Dmg - Expect) <= 0.05f,
+				FString::Printf(TEXT("drop %.3f m, impact %.3f m/s -> v^2/2g %.3f m (err %+.3f m), damage %.2f HP (formula on drop %.2f)"), Hd, Crew->LastImpactSpeed, Eq, Eq - Hd, Dmg, ExpectFromDrop));
 			if (FallIndex == 3) Shot(TEXT("04_hangar_after_falls"));
 			++FallIndex; SubStep = 0; StepTime = -0.5f;
 		}
@@ -268,15 +276,45 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 			Result(TEXT("Ladder zero-g: float in shaft (<= 0.3 m/s, still on ladder)"), Crew->IsOnLadder() && V <= 0.32f, FString::Printf(TEXT("on=%d, %.2f m/s, mode %d"), Crew->IsOnLadder(), V, (int)Move->MovementMode));
 			PC->ToggleGravity(); Log(TEXT("G: on in shaft")); SubStep = 5; StepTime = 0; break;
 		}
+		if (SubStep == 5 && Crew->GetLadder())
+		{
+			ALadderVolume* L = Crew->GetLadder();
+			MaxHatchAlpha = FMath::Max(MaxHatchAlpha, L->HatchAlpha);
+			if (Crew->bHatchStopped) HatchWaitTime += DeltaSeconds;
+			if (FeetZm < 14.0f && L->HatchAlpha > 0.5f && !Shots.Contains(TEXT("12_hatch_DCD77_open.png"))) Shot(TEXT("12_hatch_DCD77_open"));
+		}
 		if (SubStep == 5 && (!Crew->IsOnLadder() || StepTime > 12.f))
 		{
 			const float Dmg = Crew->MaxHealth - Crew->Health;
-			Result(TEXT("Ladder: restore resumes slide, exit at bottom, no fall damage"), !Crew->IsOnLadder() && FMath::Abs(FeetZm - 9.667f) < 0.2f && Dmg < 0.01f,
-				FString::Printf(TEXT("feet %.2f m, mode %d, damage %.1f"), FeetZm, (int)Move->MovementMode, Dmg));
+			Result(TEXT("QA-140 hatch DCD-77 auto-opens on the slide (0.6 s), no stop"), MaxHatchAlpha >= 0.999f && HatchWaitTime < 0.05f,
+				FString::Printf(TEXT("max hatch open %.2f, held at hatch %.2f s"), MaxHatchAlpha, HatchWaitTime));
+			Result(TEXT("Ladder: restore resumes slide, exit at bottom (Walking), no fall damage"), !Crew->IsOnLadder() && FMath::Abs(FeetZm - 9.667f) < 0.2f && Dmg < 0.01f && Move->MovementMode == MOVE_Walking,
+				FString::Printf(TEXT("feet %.2f m, mode %d (1 = Walking), damage %.1f"), FeetZm, (int)Move->MovementMode, Dmg));
 			Shot(TEXT("11_ladder_bottom_C2SP")); SubStep = 6; StepTime = -0.5f; break;
 		}
 		if (SubStep == 6) { Crew->SetLadderInput(1.f); if (Crew->IsOnLadder()) { Z0 = FeetZm; SubStep = 7; StepTime = 0; } else if (StepTime > 2.f) { Result(TEXT("Ladder climb 0.6 m/s"), false, TEXT("could not re-grab at bottom")); Next(); } break; }
 		if (SubStep == 7) { Crew->SetLadderInput(1.f); if (StepTime > 3.f) { const float V = (FeetZm - Z0) / StepTime; Result(TEXT("Ladder climb 0.6 m/s"), FMath::Abs(V - 0.6f) < 0.08f, FString::Printf(TEXT("%.2f m/s"), V)); Next(); } break; }
+		break;
+	}
+
+	case 10: // QA-140 pressure-locked hatch: stop on it, prompt, climb back up; then unlock -> slide through, Walking at the bottom
+	{
+		ALadderVolume* L = nullptr; for (TActorIterator<ALadderVolume> It(GetWorld()); It; ++It) { L = *It; break; }
+		if (!L) { Result(TEXT("QA-140 locked hatch"), false, TEXT("no ladder")); Next(); break; }
+		if (SubStep == 0) { L->bHatchPressureLocked = true; Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(27.7, -13.5, 17.0), 0.f); SubStep = 1; StepTime = -0.5f; break; }
+		if (SubStep == 1 && StepTime > 3.5f)
+		{
+			Result(TEXT("QA-140 locked: slide stops on the hatch + LOCKED prompt"), Crew->IsOnLadder() && Crew->bHatchStopped && FMath::Abs(FeetZm - 13.137f) < 0.1f && !L->LastPrompt.IsEmpty() && L->HatchAlpha < 0.001f,
+				FString::Printf(TEXT("on=%d stopped=%d feet %.2f m, hatch %.2f, prompt '%s'"), Crew->IsOnLadder(), Crew->bHatchStopped, FeetZm, L->HatchAlpha, *L->LastPrompt));
+			Shot(TEXT("13_hatch_locked_prompt")); Z0 = FeetZm; SubStep = 2; StepTime = 0; break;
+		}
+		if (SubStep == 2) { Crew->SetLadderInput(1.f); if (StepTime > 2.f) { Result(TEXT("QA-140 locked: can climb back up"), Crew->IsOnLadder() && FeetZm - Z0 > 1.0f, FString::Printf(TEXT("%.2f -> %.2f m"), Z0, FeetZm)); L->bHatchPressureLocked = false; SubStep = 3; StepTime = 0; } break; }
+		if (SubStep == 3 && (!Crew->IsOnLadder() || StepTime > 10.f))
+		{
+			Result(TEXT("QA-140 unlocked: slide through, Walking after exit"), !Crew->IsOnLadder() && Move->MovementMode == MOVE_Walking && FMath::Abs(FeetZm - 9.667f) < 0.2f,
+				FString::Printf(TEXT("feet %.2f m, mode %d"), FeetZm, (int)Move->MovementMode));
+			Next();
+		}
 		break;
 	}
 

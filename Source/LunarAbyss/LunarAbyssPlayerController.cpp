@@ -1,4 +1,5 @@
 #include "LunarAbyssPlayerController.h"
+#include "LadderVolume.h"
 #include "CrewCharacter.h"
 #include "FighterPawn.h"
 #include "CorvetteHangar.h"
@@ -84,6 +85,11 @@ void ALunarAbyssPlayerController::SwitchToCrew()
 {
 	if (!Crew) { for (TActorIterator<ACrewCharacter> It(GetWorld()); It; ++It) { Crew = *It; break; } }
 	if (Crew) Possess(Crew);
+}
+
+void ALunarAbyssPlayerController::LockHatch(int32 bLocked)
+{
+	for (TActorIterator<ALadderVolume> It(GetWorld()); It; ++It) { It->bHatchPressureLocked = bLocked != 0; UE_LOG(LogTemp, Log, TEXT("%s hatch locked=%d"), *It->GetName(), bLocked); }
 }
 
 void ALunarAbyssPlayerController::LaunchFighter()

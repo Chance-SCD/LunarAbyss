@@ -63,6 +63,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Crew") bool IsOnLadder() const { return Ladder != nullptr; }
 	/** Test hook: ladder axis input (+1 climb, 0 release). */
 	void SetLadderInput(float V) { LadderInput = V; }
+	/** On the ladder and held at the DCD-77 hatch (locked, or still opening). */
+	bool bHatchStopped = false;
+	bool bHatchBlocked = false; // pressure-locked
+	ALadderVolume* GetLadder() const { return Ladder; }
+	// QA-142 fall diagnostics (last landing)
+	float LastAirVz = 0.f, LastAirZ = 0.f, LastImpactSpeed = 0.f, LastEquivDropM = 0.f, LastDropM = 0.f, LastFallDamage = 0.f;
 	/** Set by the gravity engine while it is ramping back in (restore). */
 	void SetGravityRestoring(bool b) { bGravityRestoring = b; }
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Crew|Health") float Health = 140.f;

@@ -230,6 +230,13 @@ void ACrewCharacter::Tick(float DeltaSeconds)
 	else if (LadderCooldown && LadderInput > 0.5f && GetCharacterMovement()->IsMovingOnGround()) EnterLadder(LadderCooldown); // climb back up from the bottom
 	if (!Ladder) LadderInput = 0.f;
 	if (bTrackingFall) FallApexZ = FMath::Max(FallApexZ, GetActorLocation().Z);
+	if (GetCharacterMovement()->IsFalling()) { LastAirVz = GetCharacterMovement()->Velocity.Z; LastAirZ = GetActorLocation().Z; } // last airborne frame (QA-142)
+	// QA-140: never stay in Flying after the ladder unless we are really in zero-g.
+	if (!Ladder && !bZeroG && ShipGravity > 0.001f && GetCharacterMovement()->MovementMode == MOVE_Flying)
+	{
+		GetCharacterMovement()->GravityScale = ShipGravity;
+		GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+	}
 	if (bSprinting && GetLastMovementInputVector().IsNearlyZero()) { bSprinting = false; UpdateSpeeds(); }
 	// Jump: v0 from BaseJumpHeightM at 1 g, scaled by (g / 9.81)^exp with current gravity; apex capped indoors.
 	UCharacterMovementComponent* Move = GetCharacterMovement();
@@ -246,13 +253,20 @@ void ACrewCharacter::Landed(const FHitResult& Hit)
 	if (!bTrackingFall) return;
 	bTrackingFall = false;
 	const float DropM = (FallApexZ - GetActorLocation().Z) / M;
-	const float V = FMath::Max(0.f, -GetCharacterMovement()->Velocity.Z / M); // impact speed, m/s
+	// QA-142: impact speed = vertical speed on the last frame in the air (landing clears/clips Velocity).
+	// Carry the last airborne frame's speed through the remaining distance to contact: v^2 = v_last^2 + 2 g d.
+	const float Grav = FMath::Abs(GetCharacterMovement()->GetGravityZ());
+	const float Rem = FMath::Max(0.f, LastAirZ - GetActorLocation().Z);
+	const float V = (LastAirVz < 0.f ? FMath::Sqrt(LastAirVz * LastAirVz + 2.f * Grav * Rem) : 0.f) / M; // m/s
+	LastImpactSpeed = V; LastDropM = DropM;
 	const float EquivDropM = V * V / (2.f * 9.81f);
+	LastEquivDropM = EquivDropM; LastFallDamage = 0.f;
 	const float G = GetCharacterMovement()->GravityScale;
 	if (EquivDropM > FallSafeHeight)
 	{
 		float Dmg = FallDamagePerMetre * (EquivDropM - FallSafeHeight);
 		if (bFallStartedLowG) Dmg = FMath::Min(Dmg, MaxHealth * RestoreFallDamageCapPct / 100.f);
+		LastFallDamage = Dmg;
 		TakeDamage(Dmg, FDamageEvent(), GetController(), this);
 		UE_LOG(LogTemp, Log, TEXT("Fall %.2f m, impact %.2f m/s (equiv %.2f m) at %.2f g%s -> %.1f damage (HP %.1f)"), DropM, V, EquivDropM, G, bFallStartedLowG ? TEXT(" (restore cap)") : TEXT(""), Dmg, Health);
 	}
@@ -306,7 +320,10 @@ void ACrewCharacter::ExitLadder(bool bTop)
 		SetActorLocation(L->GetTopExitWorld() + FVector(0, 0, Half + 2.f), false, nullptr, ETeleportType::TeleportPhysics);
 	}
 	bTrackingFall = false;
-	Move->SetMovementMode(ShipGravity > 0.f ? MOVE_Walking : MOVE_Flying);
+	bHatchStopped = bHatchBlocked = false;
+	// QA-140: always leave the ladder in a ground/air mode (Walking if on a floor, else Falling); Flying only in zero-g.
+	if (ShipGravity > 0.f) { Move->SetMovementMode(MOVE_Walking); if (!Move->IsMovingOnGround()) Move->SetMovementMode(MOVE_Falling); }
+	else Move->SetMovementMode(MOVE_Flying);
 	if (ShipGravity <= 0.f) { bZeroG = false; EnterZeroG(); }
 	UE_LOG(LogTemp, Log, TEXT("Ladder: off at %s"), bTop ? TEXT("top") : TEXT("bottom"));
 }
@@ -329,6 +346,25 @@ void ACrewCharacter::TickLadder(float Dt)
 	{
 		LadderZeroGVz = 0.f;
 		Vz = LadderInput > 0.1f ? Ladder->ClimbSpeed * M : -Ladder->SlideSpeed * M; // release = slide down 2 m/s
+	}
+	// QA-140: bottom pressure hatch. Open it on approach; if pressure-locked (or still swinging) stop at it.
+	bHatchBlocked = false;
+	if (Ladder->bHasHatch)
+	{
+		const float HTop = Ladder->HatchTopZ, HBot = HTop - Ladder->HatchThickness;
+		const float Head = Feet + 2.f * Half;
+		const bool bAbove = Feet >= HTop - 5.f, bBelow = Head <= HBot + 5.f;
+		const bool bNear = (bAbove && Feet - HTop < 250.f) || (bBelow && HBot - Head < 250.f);
+		if (bNear && Ladder->RequestHatchOpen() == false) bHatchBlocked = true;
+		if (bNear && GFrameCounter % 30 == 0) UE_LOG(LogTemp, Log, TEXT("Ladder hatch: feet %.1f head %.1f top %.1f alpha %.2f locked %d vz %.0f"), Feet, Head, HTop, Ladder->HatchAlpha, Ladder->bHatchPressureLocked, Vz);
+		if (!Ladder->IsHatchFullyOpen())
+		{
+			if (bAbove && Vz < 0.f && Feet + Vz * Dt <= HTop + 2.f) { Vz = FMath::Max(0.f, (HTop + 2.f - Feet) / Dt); bHatchStopped = true; }
+			else if (bBelow && Vz > 0.f && Head + Vz * Dt >= HBot - 2.f) { Vz = FMath::Min(0.f, (HBot - 2.f - Head) / Dt); bHatchStopped = true; }
+			else bHatchStopped = false;
+		}
+		else bHatchStopped = false;
+		if (ShipGravity <= 0.001f && bHatchStopped) LadderZeroGVz = 0.f;
 	}
 	// Hold the capsule on the shaft axis.
 	FVector ToAxis = Ladder->GetShaftCentre() - GetActorLocation(); ToAxis.Z = 0.f;
