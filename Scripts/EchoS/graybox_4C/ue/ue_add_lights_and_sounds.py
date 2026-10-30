@@ -20,8 +20,8 @@ for f in sorted(os.listdir(IES_SRC)) if os.path.isdir(IES_SRC) else []:
     t.replace_existing = t.automated = t.save = True; tools.import_asset_tasks([t])
 
 
-os.environ['GB4C_UNATTENDED'] = '0'; _, fails = cues.main(); os.environ['GB4C_UNATTENDED'] = '1'   # cue failures reported, lights still run
-ok &= not fails
+res, fails = cues.main(exit_when_done=False)   # cue failures reported, lights still run
+ok &= (not fails) and len(res) == cues.EXPECTED_CUES
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(MAP)
 try:
     lights = load('spawn_graybox_lights_ue', os.path.join(ROOT, 'spawn_graybox_lights_ue.py'))
@@ -31,4 +31,7 @@ except Exception:
     log('light script error:\n' + traceback.format_exc(), 'error'); ok = False
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
 open(os.path.join(unreal.Paths.project_saved_dir(), 'av_report.txt'), 'w').write('\n'.join(cues.REPORT))
-if not ok: sys.exit(1)
+rd = cues.report_dir()
+open(os.path.join(rd, 'av_report.txt'), 'w').write('\n'.join(cues.REPORT))
+cues.copy_ue_log(rd)   # v1.8.5: log copy after the lights too
+sys.exit(0 if ok else 1)   # 0 only when all expected cues pass and the lights ran

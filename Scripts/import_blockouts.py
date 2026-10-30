@@ -142,7 +142,13 @@ for rel, dest in JOBS:
         if bs:
             bs.set_editor_property("collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
     missing = [k for k in KEY_SOCKETS.get(name, []) if not has(k)]
-    line = "%s: X %.1f cm, LODs %d, mats %d, collision convex %d, sockets %d (RailGrip %d), key sockets missing: %s" % (name, L, nlod, nmat, convex_count(mesh), len(mesh.get_editor_property("sockets")) if False else sum(1 for i in range(200) if mesh.find_socket("RailGrip_%02d" % i)) + 0, sum(1 for i in range(200) if mesh.find_socket("RailGrip_%02d" % i)), missing or "none")
+    _sn = [str(x) for x in unreal.LAMeshInfoLibrary.get_socket_names(mesh)]
+    if name.startswith("SM_BoardingTube_BP") and "_" not in name[len("SM_BoardingTube_BP"):]:
+        _other = [x for x in _sn if not x.replace("SOCKET_", "").startswith("RailGrip")]
+        log("%s non-RailGrip sockets (%d): %s" % (name, len(_other), ", ".join(_other)))
+    if name in ("SM_Corvette4C_Body", "SM_FighterC_Body"):
+        log("QA-156 %s sockets %d (expected %d) %s" % (name, len(_sn), {"SM_Corvette4C_Body": 59, "SM_FighterC_Body": 23}[name], "OK" if len(_sn) == {"SM_Corvette4C_Body": 59, "SM_FighterC_Body": 23}[name] else "MISMATCH"))
+    line = "%s: X %.1f cm, LODs %d, mats %d, collision convex %d, sockets %d (RailGrip %d), key sockets missing: %s" % (name, L, nlod, nmat, convex_count(mesh), len(_sn), sum(1 for i in range(200) if mesh.find_socket("RailGrip_%02d" % i)), missing or "none")
     log(line); REPORT.append(line)
     unreal.EditorAssetLibrary.save_loaded_asset(mesh)
 # ---- Map ----

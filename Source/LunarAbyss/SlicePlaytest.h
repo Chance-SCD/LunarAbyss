@@ -39,6 +39,8 @@ private:
 	UPROPERTY() TObjectPtr<ACorvetteHangar> Ship;
 
 	int32 Step = -1, SubStep = 0, Waypoint = 0, FallIndex = 0, Passes = 0, Fails = 0;
+	float MinCapClear = 1e9f, MinLadClear = 1e9f, GOffFeet = 0.f, GOffV0 = 0.f, GOffStopT = -1.f, PeakDecel = 0.f, PrevVz = 0.f; int32 SwingFrames = 0, SwingShots = 0; bool bSwingOverlap = false, bLadderBoxesBuilt = false; TArray<FBox> LadderBoxes;
+	void SwingProbe(class ALadderVolume* L);
 	float StepTime = 0.f, TotalTime = 0.f, LogTimer = 0.f, Z0 = 0.f, ZMax = 0.f, H0 = 0.f, MinAbsY = 1e9f, FallStartFeet = 0.f, MaxHatchAlpha = 0.f, HatchWaitTime = 0.f, SlideLog = 0.f, HatchCrossT = -1.f;
 	bool bLeftGround = false;
 	TArray<FString> Lines;

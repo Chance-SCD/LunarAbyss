@@ -310,7 +310,20 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		{
 			const float V = (Z0 - FeetZm) / StepTime;
 			Result(TEXT("Ladder release = slide 2.0 m/s"), Crew->IsOnLadder() && FMath::Abs(V - 2.f) < 0.15f, FString::Printf(TEXT("on=%d, %.2f m/s"), Crew->IsOnLadder(), V));
-			PC->ToggleGravity(); Log(TEXT("G: off in shaft")); SubStep = 3; StepTime = 0; break;
+			PC->ToggleGravity(); Log(TEXT("G: off in shaft")); GOffFeet = FeetZm; PrevVz = GOffV0 = Crew->GetVelocity().Z / M; GOffStopT = -1.f; PeakDecel = 0.f; SubStep = 3; StepTime = 0; break;
+		}
+		if (SubStep >= 3 && SubStep <= 5) if (ALadderVolume* LS = Crew->GetLadder()) SwingProbe(LS);
+		if (SubStep == 3 && DeltaSeconds > 0.f)
+		{
+			// QA-157: deceleration of the slide when gravity goes off.
+			const float Vz = Crew->GetVelocity().Z / M;
+			PeakDecel = FMath::Max(PeakDecel, FMath::Abs(Vz - PrevVz) / DeltaSeconds); PrevVz = Vz;
+			if (GOffStopT < 0.f && FMath::Abs(Vz) < 0.01f)
+			{
+				GOffStopT = StepTime;
+				Log(FString::Printf(TEXT("QA-157 zero-g slide stop: %.2f -> 0 m/s in %.2f s, average decel %.2f m/s^2, peak %.2f m/s^2 (per frame), stopping distance %.2f m (feet %.2f -> %.2f m)"),
+					GOffV0, GOffStopT, GOffStopT > 0.f ? FMath::Abs(GOffV0) / GOffStopT : 0.f, PeakDecel, GOffFeet - FeetZm, GOffFeet, FeetZm));
+			}
 		}
 		if ((SubStep == 3 || SubStep == 4) && (SlideLog += DeltaSeconds) >= 0.2f)
 		{
@@ -348,6 +361,8 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 				FString::Printf(TEXT("max hatch open %.2f, held at hatch %.2f s"), MaxHatchAlpha, HatchWaitTime));
 			Result(TEXT("Ladder: restore resumes slide, exit at bottom (Walking), no fall damage"), !Crew->IsOnLadder() && FMath::Abs(FeetZm - 9.667f) < 0.2f && Dmg < 0.01f && Move->MovementMode == MOVE_Walking,
 				FString::Printf(TEXT("feet %.2f m, mode %d (1 = Walking), damage %.1f"), FeetZm, (int)Move->MovementMode, Dmg));
+			Result(TEXT("QA-157 hatch swing: leaf never overlaps the ladder or the player capsule"), SwingFrames > 0 && !bSwingOverlap,
+				FString::Printf(TEXT("min clearance capsule %.1f cm, ladder %.1f cm (ladder = %d interior convex pieces in the shaft, AABB = lower bound), %d swing frames"), MinCapClear, MinLadClear, LadderBoxes.Num(), SwingFrames));
 			Shot(TEXT("11_ladder_bottom_C2SP")); SubStep = 6; StepTime = -0.5f; break;
 		}
 		if (SubStep == 6) { Crew->SetLadderInput(1.f); if (Crew->IsOnLadder()) { Z0 = FeetZm; SubStep = 7; StepTime = 0; } else if (StepTime > 2.f) { Result(TEXT("Ladder climb 0.6 m/s"), false, TEXT("could not re-grab at bottom")); Next(); } break; }
@@ -387,4 +402,61 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, false);
 	}
 	}
+}
+
+void ASlicePlaytest::SwingProbe(ALadderVolume* L)
+{
+	UStaticMeshComponent* H = L ? L->Hatch.Get() : nullptr;
+	if (!H || !H->GetBodySetup() || H->GetBodySetup()->AggGeom.ConvexElems.Num() == 0) return;
+	if (!bLadderBoxesBuilt)
+	{
+		bLadderBoxesBuilt = true;
+		const FVector S = L->GetShaftCentre(); const FVector Ext = L->Shaft->GetScaledBoxExtent();
+		FBox All(ForceInit);
+		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+		{
+			TArray<UStaticMeshComponent*> Comps; It->GetComponents(Comps);
+			for (UStaticMeshComponent* C : Comps)
+			{
+				if (!C || !C->GetStaticMesh() || C->GetStaticMesh()->GetName() != TEXT("SM_Corvette4C_Interior_Blockout") || !C->GetBodySetup()) continue;
+				const FTransform T = C->GetComponentTransform();
+				for (const FKConvexElem& E : C->GetBodySetup()->AggGeom.ConvexElems)
+				{
+					FBox B(ForceInit); for (const FVector& V : E.VertexData) B += T.TransformPosition(V);
+					const FVector Ce = B.GetCenter(), Sz = B.GetSize();
+					// Ladder pieces: centred inside the shaft footprint and no wider than the shaft (excludes deck slabs and walls).
+					if (FMath::Abs(Ce.X - S.X) <= Ext.X + 10.f && FMath::Abs(Ce.Y - S.Y) <= Ext.Y + 10.f && Sz.X <= 2.f * Ext.X + 20.f && Sz.Y <= 2.f * Ext.Y + 20.f)
+					{ LadderBoxes.Add(B); All += B; }
+				}
+			}
+		}
+		Log(FString::Printf(TEXT("QA-157 ladder geometry: %d interior convex pieces in shaft footprint, union box %s"), LadderBoxes.Num(), *All.ToString()));
+	}
+	const float A = L->HatchAlpha;
+	if (A <= 0.001f || A >= 0.999f) return;
+	++SwingFrames;
+	// Leaf samples: convex vertices + midpoints of every vertex pair (edges, faces, interior).
+	const FTransform HT = H->GetComponentTransform();
+	TArray<FVector> P;
+	for (const FKConvexElem& E : H->GetBodySetup()->AggGeom.ConvexElems) for (const FVector& V : E.VertexData) P.Add(HT.TransformPosition(V));
+	const int32 N = P.Num();
+	for (int32 i = 0; i < N; ++i) for (int32 j = i + 1; j < N; ++j) P.Add((P[i] + P[j]) * 0.5f);
+	float Lad = 1e9f;
+	for (const FBox& B : LadderBoxes) for (const FVector& X : P) Lad = FMath::Min(Lad, FMath::Sqrt(B.ComputeSquaredDistanceToPoint(X)));
+	// Capsule: exact distance from the leaf's simple collision to the capsule axis, minus the radius.
+	UCapsuleComponent* Cap = Crew->GetCapsuleComponent();
+	const float R = Cap->GetScaledCapsuleRadius(), HH = Cap->GetScaledCapsuleHalfHeight();
+	const FVector C = Cap->GetComponentLocation();
+	float CapD = 1e9f;
+	for (int32 k = 0; k <= 8; ++k)
+	{
+		const FVector Q = C + FVector(0, 0, FMath::Lerp(-(HH - R), HH - R, k / 8.f)); FVector Closest;
+		const float D = H->GetDistanceToCollision(Q, Closest);
+		if (D >= 0.f) CapD = FMath::Min(CapD, D - R);
+	}
+	MinCapClear = FMath::Min(MinCapClear, CapD); MinLadClear = FMath::Min(MinLadClear, Lad);
+	if (CapD <= 0.f || Lad <= 0.f) bSwingOverlap = true;
+	Log(FString::Printf(TEXT("QA-157 swing alpha %.3f: capsule clearance %.1f cm, ladder clearance %.1f cm, feet %.2f m"), A, CapD, Lad, (C.Z - HH) / M));
+	const float Marks[3] = { 0.25f, 0.5f, 0.75f }; const TCHAR* Names[3] = { TEXT("14a_hatch_swing_25"), TEXT("14b_hatch_swing_50"), TEXT("14c_hatch_swing_75") };
+	if (SwingShots < 3 && A >= Marks[SwingShots]) { Log(FString::Printf(TEXT("SHOT %s state: hatch %.3f"), Names[SwingShots], A)); Shot(Names[SwingShots]); ++SwingShots; }
 }

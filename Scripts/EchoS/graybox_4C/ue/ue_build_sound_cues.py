@@ -1,6 +1,8 @@
 """UE 5.8.3 editor Python: import the gray-box 4C WAVs and build one SoundCue per row of C4C_SoundList.csv,
 then CHECK that every cue graph really reaches its SoundWave(s). Replaces the cue half of add_lights_and_sounds.py.
 
+v1.8.5: each cue is saved, its package reloaded from disk (reload_packages, fallback unload + load_asset), then
+  GetCueWavePaths + dependency check run on the reloaded cue; report + UE log copy -> code/playtest_04/qa155/; exit 0 only if 32/32.
 v1.8.4: size test is a warning only (wired cues save at ~4.1 KB, like empty ones); pass/fail = wave links;
   an empty graph fails with 'no wave paths'.
 v1.8.3: .uasset size test back (>= 5000 B) alongside the wave-link checks; report -> code/playtest_03/gb4c_audio_report.txt.
@@ -32,14 +34,28 @@ ON_EXISTING = os.environ.get('GB4C_ON_EXISTING', 'overwrite')
 # Size test = WARNING only (v1.8.4). qa155_0858: fresh, correctly wired single-wave cues save at 4078-4133 B, the same as
 # empty ones (~4 KB), so size cannot decide. Pass/fail = GetCueWavePaths + AssetRegistry hard deps (+ wave duration).
 MIN_CUE_BYTES = int(os.environ.get('GB4C_MIN_CUE_BYTES', '5000'))
+REPORT_SUB = os.path.join('code', 'playtest_04', 'qa155')          # v1.8.5 default (was code/playtest_03)
+EXPECTED_CUES = int(os.environ.get('GB4C_EXPECTED_CUES', '32'))
 def report_dir():
-    """code/playtest_03/ (GB4C_REPORT_DIR overrides). Looks beside and above the project, else creates <Project>/code/playtest_03."""
+    """code/playtest_04/qa155/ (GB4C_REPORT_DIR overrides). Looks in the project, its parent and ../space_rpg for code/;
+    creates playtest_04/qa155 under the first code/ found, else under <Project>/code/."""
     env = os.environ.get('GB4C_REPORT_DIR')
     if env: os.makedirs(env, exist_ok=True); return env
-    for base in (PROJ, os.path.dirname(PROJ.rstrip('/\\')), os.path.join(os.path.dirname(PROJ.rstrip('/\\')), 'space_rpg')):
-        c = os.path.join(base, 'code', 'playtest_03')
-        if os.path.isdir(c): return c
-    c = os.path.join(PROJ, 'code', 'playtest_03'); os.makedirs(c, exist_ok=True); return c
+    par = os.path.dirname(PROJ.rstrip('/\\'))
+    for base in (PROJ, par, os.path.join(par, 'space_rpg')):
+        if os.path.isdir(os.path.join(base, 'code')):
+            c = os.path.join(base, REPORT_SUB); os.makedirs(c, exist_ok=True); return c
+    c = os.path.join(PROJ, REPORT_SUB); os.makedirs(c, exist_ok=True); return c
+
+def copy_ue_log(dest_dir):
+    """Copy the running editor log (Saved/Logs/<Project>.log) next to the report."""
+    import shutil, glob
+    logs = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_log_dir())
+    cands = sorted(glob.glob(os.path.join(logs, '*.log')), key=os.path.getmtime, reverse=True)
+    if not cands: log('no UE log found in ' + logs, 'warning'); return None
+    dst = os.path.join(dest_dir, 'ue_add_lights_and_sounds_UE.log')
+    try: shutil.copyfile(cands[0], dst); return dst
+    except Exception as e: log(f'UE log copy failed: {e}', 'warning'); return None
 
 REPORT = []
 def log(msg, level='info'):
@@ -88,11 +104,34 @@ def cue_duration(cue):
     try: return float(cue.get_editor_property('duration'))
     except Exception: return -2.0                                   # unknown; wave durations are checked instead
 
+def reload_from_disk(asset_path):
+    """v1.8.5: save, drop the in-memory package, load again from the .uasset, so the check reads what is on disk."""
+    obj = unreal.load_asset(asset_path)
+    if not obj: return None
+    EAL.save_loaded_asset(obj, only_if_is_dirty=False)
+    pkg = obj.get_outermost()
+    ok = False
+    try:
+        unreal.EditorLoadingAndSavingUtils.reload_packages([pkg]); ok = True
+    except Exception as e:
+        log(f'reload_packages failed for {asset_path} ({e}); trying unload + load', 'warning')
+    if not ok:
+        try: unreal.EditorLoadingAndSavingUtils.unload_packages([pkg])
+        except Exception as e: log(f'unload_packages failed for {asset_path}: {e}', 'warning')
+    del obj, pkg
+    f = unreal.Paths.convert_relative_path_to_full(os.path.join(unreal.Paths.project_content_dir(), asset_path[len('/Game/'):] + '.uasset'))
+    registry.scan_files_synchronous([f], True)
+    re = unreal.load_asset(asset_path)
+    # Vega (QA-155, Rex): explicit per-cue proof of the disk reload.
+    log(f'{asset_path.split("/")[-1]}: reloaded from disk via {"reload_packages" if ok else "unload_packages + load_asset"}; '
+        f'{os.path.getsize(f) if os.path.exists(f) else -1} B on disk; loaded={bool(re)}')
+    return re
+
 def check_cue(cue_path, waves, loop):
     """Return list of problems (empty = cue graph reaches every wave and the waves have length). No size check."""
     probs = []
-    cue = unreal.load_asset(cue_path)
-    if not cue: return ['cue not loadable']
+    cue = reload_from_disk(cue_path)
+    if not cue: return ['cue not loadable after reload from disk']
     want = {w.get_path_name().split('.')[0] for w in waves}
     if LIB and hasattr(LIB, 'get_cue_wave_paths'):
         got = {str(x) for x in LIB.get_cue_wave_paths(cue)}
@@ -144,7 +183,7 @@ def build_cue(cue_id, waves, loop, sound_class=None):
     if not TEMPLATE_CUE[0]: TEMPLATE_CUE[0] = path
     return path, how
 
-def main():
+def main(exit_when_done=True):
     rows = list(csv.DictReader(open(SOUND_LIST, newline='')))
     log(f'{len(rows)} cues from {SOUND_LIST}; audio source {AUDIO_SRC}; on_existing={ON_EXISTING}')
     results, fails = {}, []
@@ -182,11 +221,16 @@ def main():
         for c in ev['cues']:
             if c not in results: fails.append((c, [f"named by GravityState {ev['state']} but not in sound list"]))
     log(f'CHECK: {len(rows) - len(fails)}/{len(rows)} cues wired; failures: {fails if fails else "none"}', 'error' if fails else 'info')
-    out = os.path.join(report_dir(), 'gb4c_audio_report.txt')
+    passed = len(rows) - len(fails)
+    all_ok = not fails and passed == EXPECTED_CUES
+    if passed != EXPECTED_CUES and not fails: log(f'expected {EXPECTED_CUES} cues, sound list has {len(rows)}', 'error')
+    log(f'RESULT: {passed}/{EXPECTED_CUES} pass -> exit {0 if all_ok else 1}', 'info' if all_ok else 'error')
+    d = report_dir(); out = os.path.join(d, 'gb4c_audio_report.txt')
     log('report -> ' + out)
     open(out, 'w').write('\n'.join(REPORT))
     open(os.path.join(unreal.Paths.project_saved_dir(), 'gb4c_audio_report.txt'), 'w').write('\n'.join(REPORT))
-    if fails and is_unattended(): sys.exit(1)
+    copy_ue_log(d)
+    if exit_when_done and is_unattended(): sys.exit(0 if all_ok else 1)
     return results, fails
 
 if __name__ == '__main__':

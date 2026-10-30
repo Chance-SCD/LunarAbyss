@@ -62,3 +62,10 @@ Matte practical fixtures only (Kit housings `SM_Fixture_*`, `M_FixtureLens` driv
   - every wave must be a hard AssetRegistry dependency of the cue;
   - every wave must have a duration > 0.
 - An empty graph fails with `no wave paths: graph is empty`. A missing C++ helper also fails, because the check can't run without it.
+
+## v1.8.5 (QA-155)
+- **Check reads from disk:** each cue is saved, then its package is reloaded from disk with `EditorLoadingAndSavingUtils.reload_packages` (if that fails, `unload_packages` then `load_asset`) and rescanned. `GetCueWavePaths` and the AssetRegistry dependency check then run on the reloaded cue.
+- **Size test:** still a warning only.
+- **Reports:** the default report folder is now `code/playtest_04/qa155/` (override with `GB4C_REPORT_DIR`). It gets `gb4c_audio_report.txt`, `av_report.txt` (written by the runner) and a copy of the editor log, `ue_add_lights_and_sounds_UE.log`.
+- **Exit code:** 0 only when all 32 cues pass (`GB4C_EXPECTED_CUES`, default 32); otherwise 1. Both scripts do this.
+- **Runner:** it calls the cue step with `main(exit_when_done=False)`, so the lights are still placed when cues fail.
