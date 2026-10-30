@@ -45,3 +45,20 @@ Matte practical fixtures only (Kit housings `SM_Fixture_*`, `M_FixtureLens` driv
 ## v1.8.2
 - `ue/cpp/SliceAudioLibrary.cpp`: Random children are added with `InsertChildNode` and removed with `RemoveChildNode`, matching Vega's fix. Setting `ChildNodes` directly tripped the `SoundCueGraph.cpp:61` pin assertion.
 - `ue/ue_build_sound_cues.py`: imports every wave first, saves them (`save_loaded_assets`), rescans and reloads them, then builds the cues. Each cue is saved and rescanned before its check, so a fresh project passes in one run.
+
+## v1.8.3
+- `ue/ue_build_sound_cues.py`: the .uasset size test is back, alongside the wave-link, dependency and duration checks. A cue fails if its file is under **5000 B**.
+  - Why 5000 B: empty cues saved at about 4 KB. In the playtest_03 report the smallest wired cues were 5394–5436 B (single-wave cues, e.g. `SND_4C_GRV_001` = 5426 B), and 5000 B falls between the two.
+  - The old 6 KB limit flagged good cues. Override with `GB4C_MIN_CUE_BYTES`.
+- The report is written to `code/playtest_03/gb4c_audio_report.txt`, with a copy in `Saved/`.
+  - `code/playtest_03/` is looked for in the project folder and the folder above it, then `../space_rpg/`; if none exists, it is created under the project.
+  - Override with `GB4C_REPORT_DIR`.
+
+## v1.8.4
+- `ue/ue_build_sound_cues.py`: the .uasset size test now only logs a warning and doesn't fail the run.
+  - Reason: in Vega's clean v1.8.3 run (`code/playtest_03/qa155_0858/`), the 29 single-wave cues were wired correctly but saved at 4078–4133 B, the same size as empty cues. The 3 multi-wave cues were the only ones that passed.
+- Pass or fail is decided by the wave-link check alone:
+  - every wave must be reachable through `GetCueWavePaths`;
+  - every wave must be a hard AssetRegistry dependency of the cue;
+  - every wave must have a duration > 0.
+- An empty graph fails with `no wave paths: graph is empty`. A missing C++ helper also fails, because the check can't run without it.

@@ -1,6 +1,8 @@
 """UE 5.8.3 editor Python: import the gray-box 4C WAVs and build one SoundCue per row of C4C_SoundList.csv,
 then CHECK that every cue graph really reaches its SoundWave(s). Replaces the cue half of add_lights_and_sounds.py.
 
+v1.8.4: size test is a warning only (wired cues save at ~4.1 KB, like empty ones); pass/fail = wave links;
+  an empty graph fails with 'no wave paths'.
 v1.8.3: .uasset size test back (>= 5000 B) alongside the wave-link checks; report -> code/playtest_03/gb4c_audio_report.txt.
 v1.8.2: all waves are imported, saved (save_loaded_assets), rescanned and reloaded before any cue is built, and each cue is
   saved and rescanned before its check, so a fresh project passes in one run. Random children are added via InsertChildNode (C++).
@@ -10,7 +12,7 @@ v1.8.1 (after playtest_03: 12/32 passed):
   * Graph built by LASliceAudioLibrary.build_multi_wave_cue (C++, ue/cpp/): 1 wave -> WavePlayer; N waves -> N WavePlayers
     -> Random (all wired, equal weights). Requires the C++ helper in Source/LunarAbyss.
   * Check: every wave reachable from FirstNode (get_cue_wave_paths) + AssetRegistry hard deps + wave 'duration' property > 0
-    (+ cue duration via the helper). Size test restored in v1.8.3 at 5000 B. Exits 1 under -unattended on any failure.
+    (+ cue duration via the helper). Size < 5000 B is only a warning (v1.8.4). Exits 1 under -unattended on any failure.
   * log() defined; ON_EXISTING overwrite (rebuild) | skip (keep if it passes the check).
 Usage (headless):  UnrealEditor-Cmd.exe Proj.uproject -run=pythonscript -script="ue_build_sound_cues.py" -unattended
    env: GB4C_AUDIO_SRC=<folder holding Audio/...>  GB4C_ON_EXISTING=overwrite|skip
@@ -27,8 +29,8 @@ AUDIO_SRC = os.environ.get('GB4C_AUDIO_SRC') or next((p for p in (os.path.join(P
                                                        if os.path.isdir(os.path.join(p, 'Audio'))), os.path.dirname(ROOT))
 WAVE_ROOT, CUE_ROOT = '/Game/Audio', '/Game/Audio/Cues'
 ON_EXISTING = os.environ.get('GB4C_ON_EXISTING', 'overwrite')
-# v1.8.3 size test (Skye): empty cues saved at ~4 KB; the smallest wired cues in playtest_03 were 5394-5436 B
-# (single-wave cues, e.g. SND_4C_GRV_001 = 5426 B). 5000 B sits between the two. Runs alongside the wave-link checks.
+# Size test = WARNING only (v1.8.4). qa155_0858: fresh, correctly wired single-wave cues save at 4078-4133 B, the same as
+# empty ones (~4 KB), so size cannot decide. Pass/fail = GetCueWavePaths + AssetRegistry hard deps (+ wave duration).
 MIN_CUE_BYTES = int(os.environ.get('GB4C_MIN_CUE_BYTES', '5000'))
 def report_dir():
     """code/playtest_03/ (GB4C_REPORT_DIR overrides). Looks beside and above the project, else creates <Project>/code/playtest_03."""
@@ -94,7 +96,11 @@ def check_cue(cue_path, waves, loop):
     want = {w.get_path_name().split('.')[0] for w in waves}
     if LIB and hasattr(LIB, 'get_cue_wave_paths'):
         got = {str(x) for x in LIB.get_cue_wave_paths(cue)}
-        for m in sorted(want - got): probs.append(f'graph does not reach {m}')
+        if not got: probs.append('no wave paths: graph is empty (FirstNode reaches no SoundWave)')
+        else:
+            for m in sorted(want - got): probs.append(f'graph does not reach {m}')
+    else:
+        probs.append('cannot verify wave paths: LASliceAudioLibrary.get_cue_wave_paths missing (rebuild the C++ helper)')
     opts = unreal.AssetRegistryDependencyOptions(include_soft_package_references=False, include_hard_package_references=True,
                                                  include_searchable_names=False, include_soft_management_references=False,
                                                  include_hard_management_references=False)
@@ -104,7 +110,8 @@ def check_cue(cue_path, waves, loop):
         if not wave_duration(w) > 0: probs.append(f'wave {w.get_name()} has no duration')
     f = unreal.Paths.convert_relative_path_to_full(os.path.join(unreal.Paths.project_content_dir(), cue_path[len('/Game/'):] + '.uasset'))
     if not os.path.isfile(f): probs.append('uasset not on disk (cue not saved)')
-    elif os.path.getsize(f) < MIN_CUE_BYTES: probs.append(f'uasset only {os.path.getsize(f)} B < {MIN_CUE_BYTES} B (empty graph)')
+    elif os.path.getsize(f) < MIN_CUE_BYTES:   # v1.8.4: informational only; fresh wired cues save at ~4.1 KB too
+        log(f'{os.path.basename(cue_path)}: size warning, uasset {os.path.getsize(f)} B < {MIN_CUE_BYTES} B (not a failure; wave links decide)', 'warning')
     d = cue_duration(cue)
     if d != -2.0 and not loop and not d > 0: probs.append(f'cue duration {d}')
     return probs
