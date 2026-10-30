@@ -29,6 +29,15 @@ JOBS.append(("SM_Corvette4C_Interior_Blockout.fbx", DEST))  # Atlas-V gray-box i
 # Expected X length (cm) to verify metres -> cm.
 EXPECT_X = {"SM_FighterC_Body": 1509.0, "SM_Corvette4C_Body": 12735.0, "SM_Corvette4C_Interior_Blockout": 7000.0}
 REPORT = []
+def log(m): unreal.log("[LA_IMPORT] " + m)
+# Use the legacy FBX pipeline so FbxImportUI options (combine, LODs, UCX) apply.
+unreal.SystemLibrary.execute_console_command(None, "Interchange.FeatureFlags.Import.FBX False")
+KEY_SOCKETS = {
+    "SM_Corvette4C_Body": ["Hangar", "Hangar_Spot_Fighter", "Hangar_Spot_Dropship", "HangarLaunch_Threshold", "HangarLaunch_Clear",
+                           "Camera_Cockpit", "DockCollar_Port", "Dock_Port", "Mount_HangarDoor_L", "Mount_HangarDoor_R"],
+    "SM_FighterC_Body": ["Camera_Cockpit", "Camera_Chase", "Pilot", "Spot_Fighter", "Engine_01"],
+    "SM_Corvette4C_Interior_Blockout": ["Seat_Pilot", "PlayerSpawn_Bridge", "HangarPersonnelDoor"],
+}
 
 def strip(n): return n[7:] if n.startswith("SOCKET_") else n
 
@@ -75,10 +84,10 @@ for rel, dest in JOBS:
     if name in EXPECT_X and L < EXPECT_X[name] * 0.2:
         log("%s X length %.1f cm looks unscaled; reimporting x100" % (name, L))
         name, mesh = import_one(rel, dest, 100.0); L = x_len(mesh)
-    have = {strip(str(s.get_editor_property("socket_name"))) for s in mesh.get_editor_property("sockets")}
+    def has(n): return bool(mesh.find_socket(strip(n)) or mesh.find_socket("SOCKET_" + strip(n)))
     added = 0
     for s in SOCKETS.get(name, []):
-        if strip(s["name"]) in have: continue
+        if has(s["name"]): continue
         sock = unreal.StaticMeshSocket(mesh)
         sock.set_editor_property("socket_name", strip(s["name"]))
         sock.set_editor_property("relative_location", unreal.Vector(*s["loc"]))
@@ -94,7 +103,8 @@ for rel, dest in JOBS:
         bs = mesh.get_editor_property("body_setup")
         if bs:
             bs.set_editor_property("collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
-    line = "%s: X %.1f cm, LODs %d, mats %d, sockets %d (+%d json)" % (name, L, nlod, nmat, len(have), added)
+    missing = [k for k in KEY_SOCKETS.get(name, []) if not has(k)]
+    line = "%s: X %.1f cm, LODs %d, mats %d, +%d json sockets, key sockets missing: %s" % (name, L, nlod, nmat, added, missing or "none")
     log(line); REPORT.append(line)
     unreal.EditorAssetLibrary.save_loaded_asset(mesh)
 # ---- Map ----
@@ -125,4 +135,19 @@ corv.get_editor_property("interior").set_static_mesh(unreal.load_asset(DEST + "/
 ps = spawn(unreal.PlayerStart, (3570.0, 0.0, 2297.0 + 100.0))
 les.save_current_level()
 log("Map saved: " + MAP)
+open(os.path.join(PROJ, "Saved", "import_report.txt"), "w").write("\n".join(REPORT))
+
+# ---- Move tuning data table ----
+try:
+    t = unreal.AssetImportTask()
+    t.filename = os.path.join(PROJ, "Data", "DT_Slice_MoveTuning.csv")
+    t.destination_path = "/Game/Data"; t.destination_name = "DT_Slice_MoveTuning"
+    t.replace_existing = True; t.automated = True; t.save = True
+    f = unreal.CSVImportFactory()
+    f.automated_import_settings.import_row_struct = unreal.load_object(None, "/Script/LunarAbyss.SliceMoveTuningRow")
+    t.factory = f
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([t])
+    log("DT_Slice_MoveTuning: %s" % bool(unreal.load_asset("/Game/Data/DT_Slice_MoveTuning")))
+except Exception as e:
+    log("DT_Slice_MoveTuning import FAILED: %s" % e)
 open(os.path.join(PROJ, "Saved", "import_report.txt"), "w").write("\n".join(REPORT))

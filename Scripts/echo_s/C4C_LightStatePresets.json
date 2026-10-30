@@ -1,0 +1,245 @@
+{
+ "schema": "per state: group -> {mult, kelvin_override?, color_override?, flicker, rotate_hz}; extras = exposure/fog/vfx params. mult multiplies each light intensity_cd.",
+ "states": {
+  "Normal": {
+   "groups": {
+    "LG_Main": {
+     "mult": 1.0,
+     "flicker": "none"
+    },
+    "LG_Task": {
+     "mult": 0.8
+    },
+    "LG_Battle": {
+     "mult": 0.0
+    },
+    "LG_Emergency": {
+     "mult": 0.0
+    },
+    "LG_Beacon": {
+     "mult": 0.0
+    }
+   },
+   "ev100": [
+    6,
+    7
+   ],
+   "fog_density": 0.02,
+   "gravity": [
+    0,
+    0,
+    -980
+   ]
+  },
+  "RedAlert": {
+   "groups": {
+    "LG_Main": {
+     "mult": 0.25
+    },
+    "LG_Task": {
+     "mult": 0.6
+    },
+    "LG_Battle": {
+     "mult": 1.0
+    },
+    "LG_Emergency": {
+     "mult": 0.0
+    },
+    "LG_Beacon": {
+     "mult": 1.0,
+     "rotate_hz": 0.5,
+     "only_tag": "muster"
+    }
+   },
+   "ev100": [
+    3.5,
+    4.5
+   ],
+   "fog_density": 0.03,
+   "gravity": [
+    0,
+    0,
+    -980
+   ]
+  },
+  "Damaged": {
+   "groups": {
+    "LG_Main": {
+     "mult": 0.45,
+     "flicker": "health<0.5",
+     "dead_fraction": 0.15
+    },
+    "LG_Task": {
+     "mult": 0.6,
+     "flicker": "health<0.5"
+    },
+    "LG_Battle": {
+     "mult": 1.0
+    },
+    "LG_Emergency": {
+     "mult": 1.0,
+     "when": "main<0.3"
+    },
+    "LG_Beacon": {
+     "mult": 1.0,
+     "rotate_hz": 1.0
+    }
+   },
+   "ev100": [
+    3,
+    4
+   ],
+   "fog_density": 0.3,
+   "smoke": true,
+   "gravity": [
+    0,
+    0,
+    -980
+   ]
+  },
+  "Breach": {
+   "groups": {
+    "LG_Main": {
+     "mult": 0.7
+    },
+    "LG_Task": {
+     "mult": 0.6
+    },
+    "LG_Battle": {
+     "mult": 1.0
+    },
+    "LG_Emergency": {
+     "mult": 1.0
+    },
+    "LG_Beacon": {
+     "mult": 1.0,
+     "rotate_hz": 2.0,
+     "at": "sealed_doors"
+    }
+   },
+   "ev100": [
+    3.5,
+    4.5
+   ],
+   "fog_density": 0.0,
+   "fog_fade_s": 4,
+   "condensation_flash_s": 1.5,
+   "gravity": [
+    0,
+    0,
+    -980
+   ]
+  },
+  "PowerLoss": {
+   "groups": {
+    "LG_Main": {
+     "mult": 0.0,
+     "fade_s": 0.6,
+     "brownout_rebounds": 2
+    },
+    "LG_Task": {
+     "mult": 0.1,
+     "only_tag": "battery"
+    },
+    "LG_Battle": {
+     "mult": 0.0
+    },
+    "LG_Emergency": {
+     "mult": 0.2,
+     "kelvin_override": 2700,
+     "delay_s": 0.8
+    },
+    "LG_Beacon": {
+     "mult": 1.0,
+     "rotate_hz": 1.0,
+     "at": "sealed_doors",
+     "battery": true
+    }
+   },
+   "ev100": [
+    1,
+    2
+   ],
+   "fog_density": 0.03,
+   "helmet_lamps": true,
+   "gravity": [
+    0,
+    0,
+    -980
+   ]
+  },
+  "ZeroG": {
+   "groups": {
+    "LG_Main": {
+     "mult": 1.0,
+     "hanging_fixture_physics": "float"
+    },
+    "LG_Task": {
+     "mult": 0.8
+    },
+    "LG_Battle": {
+     "mult": 0.0
+    },
+    "LG_Emergency": {
+     "mult": 0.0
+    },
+    "LG_Beacon": {
+     "mult": 0.0
+    }
+   },
+   "ev100": [
+    6,
+    7
+   ],
+   "fog_density": 0.02,
+   "gravity": [
+    0,
+    0,
+    0
+   ],
+   "vfx": {
+    "sparks": "drift, drag 0.8, life x1.5, no bounce",
+    "fire": "spherical microgravity flame, spread x0.5, light x0.6",
+    "smoke": "uniform sphere growth x0.5",
+    "props": "float 0.05-0.2 m/s"
+   },
+   "note": "stacks on top of any other state: apply the other state for lights, this one for gravity/VFX"
+  },
+  "HangarDoorCycle": {
+   "scope": "HANGAR",
+   "groups": {
+    "LG_Beacon": {
+     "mult": 1.0,
+     "color_override": "#D01A10",
+     "rotate_hz": 1.0,
+     "door_edge_strobe_hz": 1.0
+    },
+    "LG_Task": {
+     "mult": 1.0,
+     "launch_lane_ramp_s": 3.9
+    }
+   },
+   "note": "layer on Normal/RedAlert during the 7 s horn + door cycle"
+  }
+ },
+ "fixture_health_flicker": {
+  "below": 0.5,
+  "dead_below": 0.15
+ },
+ "paths": {
+  "baseline": {
+   "megalights": false,
+   "hw_rt": false,
+   "shadow_field": "shadow_baseline",
+   "shadow_budget_in_view": 12,
+   "lumen": "software or Lite",
+   "flicker": "subsystem (no light functions)"
+  },
+  "high": {
+   "megalights": true,
+   "hw_rt": true,
+   "shadow_field": "shadow_high",
+   "light_function_atlas": true
+  }
+ }
+}

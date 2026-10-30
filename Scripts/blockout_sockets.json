@@ -2890,15 +2890,746 @@
 "yaw": 90.0
 }
 ],
-"SM_Corvette4C_Blockout": [
+"SM_Corvette4C_Body": [
 {
-"name": "SOCKET_Hangar",
+"name": "Boarding_BP1",
+"loc": [
+-2469.0,
+-70.0,
+2978.0
+],
+"yaw": -0.0
+},
+{
+"name": "Boarding_BP2",
+"loc": [
+3940.0,
+-1360.0,
+1487.0
+],
+"yaw": -90.0
+},
+{
+"name": "Boarding_BP3",
+"loc": [
+-2505.0,
+1583.0,
+1487.0
+],
+"yaw": 90.0
+},
+{
+"name": "Boarding_BP4",
+"loc": [
+1680.0,
+-360.0,
+217.0
+],
+"yaw": -0.0
+},
+{
+"name": "Camera_Chase",
+"loc": [
+-11632.5,
+-0.0,
+4816.67
+],
+"yaw": 0.0
+},
+{
+"name": "Camera_Cockpit",
+"loc": [
+4497.5,
+-95.0,
+2553.0
+],
+"yaw": -0.0
+},
+{
+"name": "Dock_Dorsal",
+"loc": [
+-2469.0,
+-70.0,
+3018.0
+],
+"yaw": -0.0
+},
+{
+"name": "Dock_Port",
+"loc": [
+3940.0,
+-1400.0,
+1487.0
+],
+"yaw": -90.0
+},
+{
+"name": "Dock_Starboard",
+"loc": [
+-2505.0,
+1623.0,
+1487.0
+],
+"yaw": 90.0
+},
+{
+"name": "Dock_Ventral",
+"loc": [
+1680.0,
+-360.0,
+177.0
+],
+"yaw": -0.0
+},
+{
+"name": "DockCollar_Port",
+"loc": [
+3940.0,
+-1405.0,
+1487.0
+],
+"yaw": -90.0
+},
+{
+"name": "Engine_L_Lower",
+"loc": [
+-6367.5,
+-2050.0,
+2046.67
+],
+"yaw": 180.0
+},
+{
+"name": "Engine_L_Upper",
+"loc": [
+-6367.5,
+-2050.0,
+2586.67
+],
+"yaw": 180.0
+},
+{
+"name": "Engine_R_Lower",
+"loc": [
+-6367.5,
+2050.0,
+2046.67
+],
+"yaw": 180.0
+},
+{
+"name": "Engine_R_Upper",
+"loc": [
+-6367.5,
+2050.0,
+2586.67
+],
+"yaw": 180.0
+},
+{
+"name": "Hangar",
 "loc": [
 667.5,
 -100.0,
-966.7
+966.67
 ],
 "yaw": -90.0
+},
+{
+"name": "Hangar_Spot_Dropship",
+"loc": [
+1617.5,
+-225.0,
+966.67
+],
+"yaw": -90.0
+},
+{
+"name": "Hangar_Spot_Fighter",
+"loc": [
+-382.5,
+-350.0,
+966.67
+],
+"yaw": -90.0
+},
+{
+"name": "HangarLanding_Approach",
+"loc": [
+667.5,
+-8000.0,
+1416.67
+],
+"yaw": 90.0
+},
+{
+"name": "HangarLanding_Threshold",
+"loc": [
+667.5,
+-1650.0,
+1416.67
+],
+"yaw": 90.0
+},
+{
+"name": "HangarLaunch_Approach",
+"loc": [
+667.5,
+-8000.0,
+1416.67
+],
+"yaw": -90.0
+},
+{
+"name": "HangarLaunch_Clear",
+"loc": [
+667.5,
+-3000.0,
+1416.67
+],
+"yaw": -90.0
+},
+{
+"name": "HangarLaunch_Threshold",
+"loc": [
+667.5,
+-1650.0,
+1416.67
+],
+"yaw": -90.0
+},
+{
+"name": "Mount_Gear_FL",
+"loc": [
+4567.5,
+-450.0,
+804.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_Gear_FR",
+"loc": [
+4567.5,
+450.0,
+804.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_Gear_RL",
+"loc": [
+-2632.5,
+-1000.0,
+452.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_Gear_RR",
+"loc": [
+-2632.5,
+1000.0,
+452.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_FL_In",
+"loc": [
+4172.5,
+-310.0,
+553.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_FL_Out",
+"loc": [
+4172.5,
+-590.0,
+571.89
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_FR_In",
+"loc": [
+4172.5,
+310.0,
+553.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_FR_Out",
+"loc": [
+4172.5,
+590.0,
+571.89
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_RL_In",
+"loc": [
+-2417.5,
+-860.0,
+327.43
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_RL_Out",
+"loc": [
+-2417.5,
+-1140.0,
+364.77
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_RR_In",
+"loc": [
+-2417.5,
+860.0,
+327.43
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_GearDoor_RR_Out",
+"loc": [
+-2417.5,
+1140.0,
+364.77
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_HangarDoor_L",
+"loc": [
+-1032.5,
+-1460.0,
+966.67
+],
+"yaw": -0.0
+},
+{
+"name": "Mount_HangarDoor_R",
+"loc": [
+2367.5,
+-1460.0,
+966.67
+],
+"yaw": -0.0
+},
+{
+"name": "ShieldEmitter_01",
+"loc": [
+3217.5,
+-0.0,
+3070.0
+],
+"yaw": -0.0
+},
+{
+"name": "ShieldEmitter_02",
+"loc": [
+-3032.5,
+-0.0,
+2929.17
+],
+"yaw": -0.0
+},
+{
+"name": "ShieldEmitter_03",
+"loc": [
+4967.5,
+-0.0,
+750.67
+],
+"yaw": -0.0
+},
+{
+"name": "ShieldEmitter_04",
+"loc": [
+-2932.5,
+-0.0,
+345.42
+],
+"yaw": -0.0
+},
+{
+"name": "ShieldEmitter_05",
+"loc": [
+767.5,
+-2950.0,
+3061.67
+],
+"yaw": -0.0
+},
+{
+"name": "ShieldEmitter_06",
+"loc": [
+767.5,
+2950.0,
+3061.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_01",
+"loc": [
+2367.5,
+-0.0,
+2986.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_01_Gun",
+"loc": [
+2577.5,
+-0.0,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_01_Muzzle_L",
+"loc": [
+3579.5,
+-105.6,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_01_Muzzle_R",
+"loc": [
+3579.5,
+105.6,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_02",
+"loc": [
+567.5,
+-0.0,
+2986.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_02_Gun",
+"loc": [
+777.5,
+-0.0,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_02_Muzzle_L",
+"loc": [
+1779.5,
+-105.6,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_02_Muzzle_R",
+"loc": [
+1779.5,
+105.6,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_03",
+"loc": [
+-1132.5,
+-0.0,
+2986.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_03_Gun",
+"loc": [
+-922.5,
+-0.0,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_03_Muzzle_L",
+"loc": [
+79.5,
+-105.6,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_03_Muzzle_R",
+"loc": [
+79.5,
+105.6,
+3186.67
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_04",
+"loc": [
+3567.5,
+-0.0,
+380.0
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_04_Gun",
+"loc": [
+3725.0,
+-0.0,
+210.0
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_04_Muzzle_L",
+"loc": [
+4527.0,
+-79.2,
+210.0
+],
+"yaw": -0.0
+},
+{
+"name": "Turret_04_Muzzle_R",
+"loc": [
+4527.0,
+79.2,
+210.0
+],
+"yaw": -0.0
+}
+],
+"SM_FighterC_Body": [
+{
+"name": "Boarding_Port",
+"loc": [
+260.0,
+-340.0,
+0.0
+],
+"yaw": 90.0
+},
+{
+"name": "Camera_Chase",
+"loc": [
+-1600.0,
+-0.0,
+520.0
+],
+"yaw": 0.0
+},
+{
+"name": "Camera_Cockpit",
+"loc": [
+194.1,
+-0.0,
+289.1
+],
+"yaw": -0.0
+},
+{
+"name": "Camera_Cockpit_180",
+"loc": [
+195.4,
+-0.0,
+284.6
+],
+"yaw": -0.0
+},
+{
+"name": "Engine_01",
+"loc": [
+-753.0,
+-80.0,
+240.0
+],
+"yaw": 180.0
+},
+{
+"name": "Engine_02",
+"loc": [
+-753.0,
+80.0,
+240.0
+],
+"yaw": 180.0
+},
+{
+"name": "Gun_L",
+"loc": [
+732.0,
+-55.0,
+122.0
+],
+"yaw": -0.0
+},
+{
+"name": "Gun_R",
+"loc": [
+732.0,
+55.0,
+122.0
+],
+"yaw": -0.0
+},
+{
+"name": "HangarClamp_MainL",
+"loc": [
+-188.0,
+-150.0,
+0.0
+],
+"yaw": -0.0
+},
+{
+"name": "HangarClamp_MainR",
+"loc": [
+-188.0,
+150.0,
+0.0
+],
+"yaw": -0.0
+},
+{
+"name": "HangarClamp_Nose",
+"loc": [
+453.0,
+-0.0,
+0.0
+],
+"yaw": -0.0
+},
+{
+"name": "Pilot",
+"loc": [
+218.0,
+-0.0,
+203.0
+],
+"yaw": -0.0
+},
+{
+"name": "RCS_Nose_Down",
+"loc": [
+600.0,
+-0.0,
+157.0
+],
+"yaw": -0.0
+},
+{
+"name": "RCS_Nose_L",
+"loc": [
+620.0,
+-117.0,
+215.0
+],
+"yaw": -90.0
+},
+{
+"name": "RCS_Nose_R",
+"loc": [
+620.0,
+117.0,
+215.0
+],
+"yaw": 90.0
+},
+{
+"name": "RCS_Nose_Up",
+"loc": [
+640.0,
+-0.0,
+255.0
+],
+"yaw": -0.0
+},
+{
+"name": "RCS_Tail_Down_L",
+"loc": [
+-600.0,
+-130.0,
+130.0
+],
+"yaw": -0.0
+},
+{
+"name": "RCS_Tail_Down_R",
+"loc": [
+-600.0,
+130.0,
+130.0
+],
+"yaw": -0.0
+},
+{
+"name": "RCS_Tail_L",
+"loc": [
+-630.0,
+-241.0,
+221.0
+],
+"yaw": -90.0
+},
+{
+"name": "RCS_Tail_R",
+"loc": [
+-630.0,
+241.0,
+221.0
+],
+"yaw": 90.0
+},
+{
+"name": "RCS_Tail_Up_L",
+"loc": [
+-645.0,
+-130.0,
+341.0
+],
+"yaw": -0.0
+},
+{
+"name": "RCS_Tail_Up_R",
+"loc": [
+-645.0,
+130.0,
+341.0
+],
+"yaw": -0.0
+},
+{
+"name": "Spot_Fighter",
+"loc": [
+0.0,
+-0.0,
+0.0
+],
+"yaw": -0.0
 }
 ]
 }
