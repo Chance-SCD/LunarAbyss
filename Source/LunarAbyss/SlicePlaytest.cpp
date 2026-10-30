@@ -155,16 +155,23 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		if (SubStep == 0)
 		{
 			Crew->Health = Crew->MaxHealth;
-			TeleportCrew(FVector(16.175, 2.25, 9.667 + Hm), 90.f);
+			// Find the deck under the spot (the hangar floor is not at the D2 level).
+			FHitResult Hit; FCollisionQueryParams Q; Q.AddIgnoredActor(Crew); if (Fighter) Q.AddIgnoredActor(Fighter);
+			float FloorM = 9.667f;
+			if (GetWorld()->LineTraceSingleByChannel(Hit, ShipToWorld(FVector(16.175, 2.25, 20.0)), ShipToWorld(FVector(16.175, 2.25, 0.0)), ECC_Pawn, Q))
+				FloorM = Ship->GetActorTransform().InverseTransformPosition(Hit.ImpactPoint).Z / M;
+			TeleportCrew(FVector(16.175, 2.25, FloorM + Hm), 90.f);
+			FallStartFeet = FloorM + Hm;
 			H0 = Crew->Health; bLeftGround = false; SubStep = 1; break;
 		}
 		if (Move->IsFalling()) bLeftGround = true;
 		if ((bLeftGround && Move->IsMovingOnGround()) || StepTime > 6.f)
 		{
 			const float Dmg = H0 - Crew->Health;
-			const float Expect = Hm > 3.f ? 15.f * (Hm - 3.f) : 0.f; // v^2/2g = h for a free fall from rest
+			const float Hd = FallStartFeet - FeetZm; // actual drop of the feet
+			const float Expect = Hd > 3.f ? 15.f * (Hd - 3.f) : 0.f; // v^2/2g = h for a free fall from rest
 			Result(FString::Printf(TEXT("Fall %.0f m (expect %.1f HP)"), Hm, Expect), FMath::Abs(Dmg - Expect) <= FMath::Max(1.5f, Expect * 0.06f),
-				FString::Printf(TEXT("damage %.1f HP, feet now %.2f m"), Dmg, FeetZm));
+				FString::Printf(TEXT("drop %.2f m, damage %.1f HP, landed feet %.2f m"), Hd, Dmg, FeetZm));
 			if (FallIndex == 3) Shot(TEXT("04_hangar_after_falls"));
 			++FallIndex; SubStep = 0; StepTime = -0.5f;
 		}
@@ -172,12 +179,13 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 	}
 
 	case 5: // F at the pilot seat -> launch + possess fighter
-		if (SubStep == 0) { Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(43.8, 1.0, 24.317), 0.f); SubStep = 1; StepTime = -1.f; break; }
+		if (SubStep == 0) { Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(43.8, 1.0, 22.97), 0.f); SubStep = 1; StepTime = -1.f; break; }
 		if (SubStep == 1)
 		{
 			PC->PressF();
 			Fighter = Cast<AFighterPawn>(PC->GetPawn());
 			Result(TEXT("F at pilot seat possesses fighter"), Fighter != nullptr, FString::Printf(TEXT("pawn %s, doors state %d"), *GetNameSafe(PC->GetPawn()), (int)Ship->GetHangarDoorState()));
+			if (!Fighter) { PC->LaunchFighter(); PC->SwitchToFighter(); Fighter = Cast<AFighterPawn>(PC->GetPawn()); Log(FString::Printf(TEXT("fallback: console LaunchFighter + SwitchToFighter -> %s"), *GetNameSafe(Fighter))); }
 			if (!Fighter) { Next(); break; }
 			Fighter->SetCockpitView(false);
 			SubStep = 2; LogTimer = 0; break;
@@ -205,6 +213,7 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		break;
 
 	case 6: // Hull collision: fly at the port side after the 4 s ignore window
+		if (!Fighter) { Result(TEXT("Fighter blocked by 4C hull"), false, TEXT("no fighter pawn")); Next(); break; }
 		if (SubStep == 0)
 		{
 			Fighter->SetActorLocationAndRotation(ShipToWorld(FVector(0, 60, 18)), FRotator(0, 90, 0), false, nullptr, ETeleportType::TeleportPhysics);

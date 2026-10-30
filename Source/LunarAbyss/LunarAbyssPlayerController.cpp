@@ -59,10 +59,9 @@ void ALunarAbyssPlayerController::OnInteract()
 	const FVector Loc = P->GetActorLocation();
 	if (ACorvetteHangar* V = FindCorvette())
 	{
-		for (const FName S : { FName(TEXT("SOCKET_Seat_Pilot")), FName(TEXT("SOCKET_Seat_CoPilot")), FName(TEXT("Camera_Cockpit")) })
+		for (const FName S : { FName(TEXT("Seat_Pilot")), FName(TEXT("Seat_CoPilot")), FName(TEXT("Camera_Cockpit")) })
 		{
-			FTransform T;
-			if (V->GetSocketTransform(S, T) && FVector::Dist(T.GetLocation(), Loc) <= InteractRange * 100.f + 90.f)
+			if (V->DistToSocket(S, Loc) <= InteractRange * 100.f + 90.f)
 			{
 				// Pilot seat: take the fighter straight out of the bay.
 				AFighterPawn* F = FindFighter();

@@ -89,6 +89,18 @@ bool ACorvetteHangar::GetSocketTransform(FName Socket, FTransform& Out) const
 	return false;
 }
 
+float ACorvetteHangar::DistToSocket(FName Socket, const FVector& World) const
+{
+	// Nearest instance over interior and hull (both meshes may carry a socket of the same name).
+	FString S = Socket.ToString();
+	const FName Alt = S.StartsWith(TEXT("SOCKET_")) ? FName(*S.RightChop(7)) : FName(*(TEXT("SOCKET_") + S));
+	float Best = TNumericLimits<float>::Max();
+	for (const UStaticMeshComponent* C : { Interior.Get(), Hull.Get() })
+		for (const FName N : { Socket, Alt })
+			if (C && C->DoesSocketExist(N)) Best = FMath::Min(Best, (float)FVector::Dist(C->GetSocketLocation(N), World));
+	return Best;
+}
+
 bool ACorvetteHangar::SnapLaunchPointToSocket()
 {
 	for (const FName& Name : LaunchSocketNames)

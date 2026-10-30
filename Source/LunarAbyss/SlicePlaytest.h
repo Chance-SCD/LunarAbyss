@@ -39,7 +39,7 @@ private:
 	UPROPERTY() TObjectPtr<ACorvetteHangar> Ship;
 
 	int32 Step = -1, SubStep = 0, Waypoint = 0, FallIndex = 0, Passes = 0, Fails = 0;
-	float StepTime = 0.f, TotalTime = 0.f, LogTimer = 0.f, Z0 = 0.f, ZMax = 0.f, H0 = 0.f, MinAbsY = 1e9f;
+	float StepTime = 0.f, TotalTime = 0.f, LogTimer = 0.f, Z0 = 0.f, ZMax = 0.f, H0 = 0.f, MinAbsY = 1e9f, FallStartFeet = 0.f;
 	bool bLeftGround = false;
 	TArray<FString> Lines;
 	TArray<FString> Shots;

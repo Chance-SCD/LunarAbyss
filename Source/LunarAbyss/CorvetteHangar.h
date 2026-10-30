@@ -45,6 +45,7 @@ public:
 
 	/** Ship-frame world position of an interior socket (falls back to hull). */
 	bool GetSocketTransform(FName Socket, FTransform& Out) const;
+	float DistToSocket(FName Socket, const FVector& World) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UStaticMeshComponent> Hull;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UStaticMeshComponent> Interior;
