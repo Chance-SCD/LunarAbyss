@@ -28,7 +28,21 @@ for sub, dest in (("FighterC", "/Game/Ships/FighterC"), ("Corvette4C", "/Game/Sh
         for f in sorted(os.listdir(pdir)):
             if f.endswith(".fbx"):
                 JOBS.append((os.path.join(sub, "parts", f), dest + "/Parts"))
-JOBS.append(("SM_Corvette4C_Interior_Blockout.fbx", DEST))  # Atlas-V gray-box interior (handoff has none)
+JOBS.append(("SM_Corvette4C_Interior_Blockout.fbx", DEST))  # Atlas-V gray-box interior (hatch leaf + trigger split out)
+JOBS.append(("SM_Hatch_DCD77.fbx", DEST))                    # DCD-77 hatch leaf, pivot on the hinge, UCX_SM_Hatch_DCD77_00
+
+# ---- QA-139 pre-clean: stale 'Cube' assets left in the project (no current FBX has one) ----
+_reg = unreal.AssetRegistryHelpers.get_asset_registry()
+for ad in _reg.get_assets_by_path("/Game", recursive=True):
+    if str(ad.asset_name).lower().startswith("cube") and str(ad.asset_class_path.asset_name) == "StaticMesh":
+        pkg = str(ad.package_name)
+        refs = _reg.get_referencers(pkg, unreal.AssetRegistryDependencyOptions(True, True, True, True, True)) or []
+        refs = [str(r) for r in refs if str(r) != pkg]
+        ok = unreal.EditorAssetLibrary.delete_asset(pkg)
+        print("[LA_IMPORT] stale Cube asset %s referencers=%s deleted=%s" % (pkg, refs, ok))
+
+def convex_count(m):
+    return len(m.get_editor_property("body_setup").get_editor_property("agg_geom").get_editor_property("convex_elems")) if m else -1
 # Expected X length (cm) to verify metres -> cm.
 EXPECT_X = {"SM_FighterC_Body": 1509.0, "SM_Corvette4C_Body": 12735.0, "SM_Corvette4C_Interior_Blockout": 7000.0}
 REPORT = []
@@ -80,6 +94,12 @@ def x_len(mesh):
     return b.max.x - b.min.x
 
 for rel, dest in JOBS:
+    _nm = os.path.splitext(os.path.basename(rel))[0]
+    _old = unreal.load_asset(dest + "/" + _nm) if unreal.EditorAssetLibrary.does_asset_exist(dest + "/" + _nm) else None
+    if _old and _nm in ("SM_Corvette4C_Body", "SM_FighterC_Body") and convex_count(_old) == 0 and os.environ.get("LA_CLEAN") == "1":
+        # Old import with unmatched UCX names: delete it so the reimport builds collision from scratch.
+        refs = _reg.get_referencers(dest + "/" + _nm, unreal.AssetRegistryDependencyOptions(True, True, True, True, True)) or []
+        print("[LA_IMPORT] %s has 0 collision; referencers %s; deleting for a clean import: %s" % (_nm, [str(r) for r in refs], unreal.EditorAssetLibrary.delete_asset(dest + "/" + _nm)))
     name, mesh = import_one(rel, dest, 1.0)
     if not mesh:
         log("FAILED import " + rel); REPORT.append("FAILED " + rel); continue
@@ -122,7 +142,7 @@ for rel, dest in JOBS:
         if bs:
             bs.set_editor_property("collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
     missing = [k for k in KEY_SOCKETS.get(name, []) if not has(k)]
-    line = "%s: X %.1f cm, LODs %d, mats %d, key sockets missing: %s" % (name, L, nlod, nmat, missing or "none")
+    line = "%s: X %.1f cm, LODs %d, mats %d, collision convex %d, key sockets missing: %s" % (name, L, nlod, nmat, convex_count(mesh), missing or "none")
     log(line); REPORT.append(line)
     unreal.EditorAssetLibrary.save_loaded_asset(mesh)
 # ---- Map ----

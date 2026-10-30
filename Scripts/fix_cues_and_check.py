@@ -44,6 +44,17 @@ if not corv:
 else:
     corv.rerun_construction_scripts() if hasattr(corv, "rerun_construction_scripts") else None
     hull = corv.get_editor_property("hull")
+    # Relink after a clean reimport (QA-139): hull, interior, and any fighter mesh component left empty.
+    hull.set_static_mesh(unreal.load_asset("/Game/Ships/Corvette4C/SM_Corvette4C_Body"))
+    corv.get_editor_property("interior").set_static_mesh(unreal.load_asset("/Game/Blockouts/SM_Corvette4C_Interior_Blockout"))
+    fbody = unreal.load_asset("/Game/Ships/FighterC/SM_FighterC_Body")
+    for a in eas.get_all_level_actors():
+        if a.get_class().get_name() == "FighterPawn":
+            for c in a.get_components_by_class(unreal.StaticMeshComponent):
+                if c.static_mesh is None or c.static_mesh.get_name() == "SM_FighterC_Body": c.set_static_mesh(fbody)
+    for p in ("/Game/Ships/Corvette4C/SM_Corvette4C_Body", "/Game/Ships/FighterC/SM_FighterC_Body", "/Game/Blockouts/SM_Hatch_DCD77"):
+        m = unreal.load_asset(p)
+        log("collision %s: %d convex" % (p, len(m.get_editor_property("body_setup").get_editor_property("agg_geom").get_editor_property("convex_elems")) if m else -1))
     for n in ("hangar_door_l", "hangar_door_r"):
         d = corv.get_editor_property(n)
         log("%s mesh=%s attach_socket=%s world=%s" % (n, d.static_mesh.get_name() if d.static_mesh else None,
