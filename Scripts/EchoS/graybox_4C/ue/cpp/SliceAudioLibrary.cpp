@@ -92,9 +92,11 @@ bool ULASliceAudioLibrary::BuildMultiWaveCue(USoundCue* Cue, const TArray<USound
 	{
 		USoundNodeRandom* R = Cue->ConstructSoundNode<USoundNodeRandom>();
 		R->bRandomizeWithoutReplacement = true;
-		R->ChildNodes.Reset();
-		R->Weights.Reset();
-		for (USoundNode* P : Players) { R->ChildNodes.Add(P); R->Weights.Add(1.0f); }
+		// Vega fix: ConstructSoundNode already made the editor graph node with its default input pins (Random = 2).
+		// Writing ChildNodes directly desyncs pins (SoundCueGraph.cpp:61 assert), so grow via InsertChildNode, which adds pins + weights.
+		while (R->ChildNodes.Num() < Players.Num()) R->InsertChildNode(R->ChildNodes.Num());
+		while (R->ChildNodes.Num() > Players.Num()) R->RemoveChildNode(R->ChildNodes.Num() - 1);
+		for (int32 i = 0; i < Players.Num(); ++i) { R->ChildNodes[i] = Players[i]; if (R->Weights.IsValidIndex(i)) R->Weights[i] = 1.0f; }
 		Cue->FirstNode = R;
 	}
 	Cue->LinkGraphNodesFromSoundNodes();

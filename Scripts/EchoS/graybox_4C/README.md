@@ -41,3 +41,7 @@ Matte practical fixtures only (Kit housings `SM_Fixture_*`, `M_FixtureLens` driv
 - `ue/cpp/SliceAudioLibrary.h/.cpp`: drop-in replacement for `Source/LunarAbyss/SliceAudioLibrary.*`. It adds `BuildMultiWaveCue`, `GetCueWavePaths` and `GetCueDuration`, so rebuild the editor target before running the cue script.
 - `ue/ue_build_sound_cues.py`: rebuilds each cue in place, or creates it with `create_asset` and a factory, with no dialogs. Multi-wave cues use a Random node with every wave wired. The size check is gone.
 - MegaLights cvar: `r.MegaLights.Allowed=0` (device profile) plus `r.MegaLights.EnableForProject=0` (`DefaultEngine.ini`).
+
+## v1.8.2
+- `ue/cpp/SliceAudioLibrary.cpp`: Random children are added with `InsertChildNode` and removed with `RemoveChildNode`, matching Vega's fix. Setting `ChildNodes` directly tripped the `SoundCueGraph.cpp:61` pin assertion.
+- `ue/ue_build_sound_cues.py`: imports every wave first, saves them (`save_loaded_assets`), rescans and reloads them, then builds the cues. Each cue is saved and rescanned before its check, so a fresh project passes in one run.

@@ -15,6 +15,11 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "LadderVolume.h"
 #include "Components/BoxComponent.h"
+#include "AudioDevice.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/StaticMeshSocket.h"
+#include "PhysicsEngine/BodySetup.h"
+#include "Misc/CommandLine.h"
 #include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
 
@@ -83,6 +88,40 @@ void ASlicePlaytest::Start(ALunarAbyssPlayerController* InPC)
 	Fighter = Ship ? Ship->GetParkedFighter() : nullptr;
 	Log(FString::Printf(TEXT("Start: crew=%s ship=%s fighter=%s"), *GetNameSafe(Crew), *GetNameSafe(Ship), *GetNameSafe(Fighter)));
 	if (!Crew || !Ship) { Result(TEXT("Setup"), false, TEXT("missing crew or ship")); Step = 99; return; }
+	// Audio state of this run (Rex: explicit line).
+	{
+		FAudioDeviceHandle AD = GetWorld()->GetAudioDevice();
+		const bool bNoSound = FParse::Param(FCommandLine::Get(), TEXT("nosound"));
+		Log(FString::Printf(TEXT("AUDIO: sound %s (audio device %s, -nosound %d)"), (AD.IsValid() && !bNoSound) ? TEXT("ON") : TEXT("OFF"), AD.IsValid() ? TEXT("valid") : TEXT("none"), bNoSound));
+	}
+	// QA-139: collision counts of the placed meshes + interior socket check (mesh-local cm).
+	{
+		TMap<FString, int32> Convex;
+		TMap<FString, UStaticMesh*> Meshes;
+		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+		{
+			TArray<UStaticMeshComponent*> Comps; It->GetComponents(Comps);
+			for (UStaticMeshComponent* C : Comps)
+				if (UStaticMesh* SM = C ? C->GetStaticMesh() : nullptr)
+					if (!Convex.Contains(SM->GetName())) { Convex.Add(SM->GetName(), SM->GetBodySetup() ? SM->GetBodySetup()->AggGeom.ConvexElems.Num() : -1); Meshes.Add(SM->GetName(), SM); }
+		}
+		const TPair<const TCHAR*, int32> Want[] = { {TEXT("SM_Corvette4C_Body"), 140}, {TEXT("SM_FighterC_Body"), 52}, {TEXT("SM_Hatch_DCD77"), 1} };
+		for (const auto& W : Want)
+		{
+			const int32* N = Convex.Find(W.Key);
+			Result(FString::Printf(TEXT("QA-139 collision %s = %d convex"), W.Key, W.Value), N && *N == W.Value, FString::Printf(TEXT("%s: %d convex in the running level"), W.Key, N ? *N : -1));
+		}
+		struct FS { const TCHAR* N; FVector E; };
+		const FS Sock[] = { {TEXT("Hatch_DCD77"), FVector(2840, 1350, 1311.7)}, {TEXT("Seat_Pilot"), FVector(4497.5, -100, 2431.7)}, {TEXT("DC_DCD-77"), FVector(2770, 1350, 1311.7)}, {TEXT("Trig_Hatch_DCD77"), FVector(2770, 1350, 1386.7)} };
+		UStaticMesh** Int = Meshes.Find(TEXT("SM_Corvette4C_Interior_Blockout"));
+		for (const FS& K : Sock)
+		{
+			const UStaticMeshSocket* S = (Int && *Int) ? (*Int)->FindSocket(K.N) : nullptr;
+			const FVector P = S ? S->RelativeLocation : FVector(NAN);
+			Result(FString::Printf(TEXT("QA-139 socket %s at (%.1f, %.1f, %.1f) cm"), K.N, K.E.X, K.E.Y, K.E.Z), S && P.Equals(K.E, 0.5f),
+				S ? FString::Printf(TEXT("found (%.2f, %.2f, %.2f) cm, error %.2f cm"), P.X, P.Y, P.Z, (P - K.E).Size()) : FString(TEXT("socket missing")));
+		}
+	}
 	Step = 0; StepTime = -2.f; // let the level settle
 }
 
@@ -273,6 +312,11 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 			Result(TEXT("Ladder release = slide 2.0 m/s"), Crew->IsOnLadder() && FMath::Abs(V - 2.f) < 0.15f, FString::Printf(TEXT("on=%d, %.2f m/s"), Crew->IsOnLadder(), V));
 			PC->ToggleGravity(); Log(TEXT("G: off in shaft")); SubStep = 3; StepTime = 0; break;
 		}
+		if ((SubStep == 3 || SubStep == 4) && (SlideLog += DeltaSeconds) >= 0.2f)
+		{
+			SlideLog = 0; ALadderVolume* L = Crew->GetLadder();
+			Log(FString::Printf(TEXT("QA-143 slide gravity OFF t=%.2f feet %.2f m vz %.2f m/s on=%d hatch %.2f"), (SubStep == 4 ? 2.5f : 0.f) + StepTime, FeetZm, Crew->GetVelocity().Z / M, Crew->IsOnLadder(), L ? L->HatchAlpha : -1.f));
+		}
 		if (SubStep == 3 && StepTime > 2.5f) { Z0 = FeetZm; SubStep = 4; StepTime = 0; break; }
 		if (SubStep == 4 && StepTime > 1.f)
 		{
@@ -285,10 +329,15 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 			ALadderVolume* L = Crew->GetLadder();
 			MaxHatchAlpha = FMath::Max(MaxHatchAlpha, L->HatchAlpha);
 			if (Crew->bHatchStopped) HatchWaitTime += DeltaSeconds;
-			if ((SlideLog += DeltaSeconds) >= 0.2f) { SlideLog = 0; Log(FString::Printf(TEXT("QA-143 slide t=%.2f feet %.2f m hatch %.2f"), StepTime, FeetZm, L->HatchAlpha)); }
+			if ((SlideLog += DeltaSeconds) >= 0.2f) { SlideLog = 0; Log(FString::Printf(TEXT("QA-143 slide gravity ON t=%.2f feet %.2f m hatch %.2f"), StepTime, FeetZm, L->HatchAlpha)); }
 			if (FeetZm <= (L->HatchTrigger->GetComponentLocation().Z + 75.f) / M && HatchCrossT < 0) HatchCrossT = StepTime; // entering the trigger (top 14.617)
 			PC->SetControlRotation(FRotator(-75.f, 0.f, 0.f)); // look down the shaft at the hatch
-			if (FeetZm < 14.3f && L->HatchAlpha > 0.99f && !Shots.Contains(TEXT("12_hatch_DCD77_open.png"))) Shot(TEXT("12_hatch_DCD77_open"));
+			// Shot 12 later: once the leaf is fully open and the feet are ~0.6 m below the leaf top (inside the open hatchway).
+			if (FeetZm < L->HatchTopZ / M - 0.6f && L->HatchAlpha >= 0.999f && !Shots.Contains(TEXT("12_hatch_DCD77_open.png")))
+			{
+				Log(FString::Printf(TEXT("SHOT 12 state: hatch open %.3f, feet %.2f m (leaf top %.3f m), t=%.2f s"), L->HatchAlpha, FeetZm, L->HatchTopZ / M, StepTime));
+				Shot(TEXT("12_hatch_DCD77_open"));
+			}
 		}
 		if (SubStep == 5 && (!Crew->IsOnLadder() || StepTime > 12.f))
 		{

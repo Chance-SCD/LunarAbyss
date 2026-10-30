@@ -11,7 +11,7 @@ Blender is right-handed and UE is left-handed: the importer flips Y, so rotation
 ## Import settings (Static Mesh)
 - Import Uniform Scale **1.0**; Convert Scene ON; Force Front XAxis OFF; Convert Scene Unit ON.
 - **Body files and each `parts/*.fbx`: Combine Meshes ON**, Import Mesh LODs ON. LODs arrive from the FBX LodGroup (`_LOD0.._LOD3`; parts carry LOD0-LOD1, tube parts LOD0-LOD3). Suggested screen sizes: 1.0 / 0.5 / 0.25 / 0.1.
-- Auto Generate Collision **OFF**: custom collision comes in as `UCX_<MeshObject>_NN` convex hulls, where `<MeshObject>` is the **exact mesh object name inside the FBX** (not the file name): `UCX_SM_Corvette4C_Hull_NN` (140) in both 4C Body and reference files, `UCX_SM_FighterC_Hull_NN` (52) in both Fighter Body and reference files, and `UCX_<part LodGroup name>_NN` for parts and tubes (the LodGroup node is named the same as the file). 1 per part, tubes 17 per tube (14 shell/door + 3 handrail); tube parts 5 per walkable section, 1 per door.
+- Auto Generate Collision **OFF**: custom collision comes in as `UCX_<MeshObject>_NN` convex hulls, where `<MeshObject>` is the **exact mesh object name inside the FBX** (not the file name): `UCX_SM_Corvette4C_Hull_NN` (140) in both 4C Body and reference files, `UCX_SM_FighterC_Hull_NN` (52) in both Fighter Body and reference files, and **`UCX_<LOD0 mesh>_NN` for parts and tubes** (e.g. `UCX_SM_Corvette4C_Turret_01_Gun_LOD0_00`, `UCX_SM_BoardingTube_BP2_LOD0_00..16`, `UCX_SM_BoardingTube_BP2_Bellows_LOD0_00..04`), never the LodGroup empty or the file name (fixed 2026-10-30 08:15 CDT, see below). 1 per part, tubes 17 per tube (14 shell/door + 3 handrail); tube parts 5 per walkable section, 1 per door.
 - Sockets: every `SOCKET_*` empty is **parented to its static mesh's LOD0 node** (fixed 2026-10-29 22:55, since UE drops unparented sockets): `SM_Corvette4C_Hull` (59), `SM_FighterC_Hull` (23), `SM_BoardingTube_BPx_LOD0` (5 each + rail grips: 21 on BP2, 27 on BP3), tube parts' `_LOD0` (rail grips only), and each turret or gun part's `_LOD0`. World position and rotation are unchanged (re-import check: ≤0.014 mm, ≤0.00002°).
 - **UE socket names have the `SOCKET_` prefix stripped**: `SOCKET_Dock_Port` → `Dock_Port`, `SOCKET_DockCollar_Port` → `DockCollar_Port`, `SOCKET_Muzzle_L` → `Muzzle_L`. Socket tables below list the FBX names; use the stripped name in Blueprints and C++ (`GetSocketLocation("Dock_Port")`). Sockets come in relative to the combined mesh pivot = ship origin, so positions match the tables.
 - Normals: Import Normals and Tangents (the FBX has smoothing groups and custom split normals). Generate Lightmap UVs **OFF**: UV1 is a packed, non-overlapping lightmap channel on every static mesh (Lightmap Coordinate Index 1). UV0 is the tiling material channel.
@@ -26,7 +26,7 @@ Blender is right-handed and UE is left-handed: the importer flips Y, so rotation
 ## Material slots (matte, weathered; no emissive anywhere)
 - Fighter C: `M_FC_Paint_Olive`, `M_FC_Paint_OliveDark`, `M_FC_Paint_Yellow`, `M_FC_Metal`, `M_FC_Metal_Dark`, `M_FC_Interior`, `M_FC_Hazard`, `M_FC_Glass` (translucent, alpha 0.22), `M_FC_Screen`, `M_FC_TubeDark`, `M_FC_Decal` (masked, the alpha stencil "FTR-C-01", texture `T_FC_Decal_FTRC01.png`).
 - Corvette 4C and tubes: `M_C4C_Paint_OffWhite`, `M_C4C_Paint_Gray`, `M_C4C_Paint_DarkGray`, `M_C4C_Paint_Red`, `M_C4C_Paint_Hazard`, `M_C4C_Metal`, `M_C4C_Metal_Dark`, `M_C4C_Interior`, `M_C4C_Glass` (translucent), `M_C4C_Screen` (unlit-looking dark panel, **not** emissive), `M_C4C_TubeDark`.
-- Textures (worn paint and metal sets) are in `art/models/Fighter_C/textures/` and `art/models/Corvette4C/textures/`. UV0 world-box mapping is about 512 px/m (Fighter) and 256 px/m (4C hull) at 1k. The boarding tubes are at 512 px/m (open note).
+- Textures: superseded by the 2026-10-30 realism pass (see **Materials: realism pass** below); the old 1k sets in `textures/` are kept only for reference. UV0 world-box mapping is about 512 px/m (Fighter) and 256 px/m (4C hull) at 1k. The boarding tubes are at 512 px/m (open note).
 - Mirroring is intentional only on the starboard FTR-C-01 decal quad (UV0 flipped so the text reads correctly).
 
 ## Fighter C (FTR-C-01), v1.3
@@ -273,3 +273,47 @@ The 00:05 fix was wrong: it named hulls after the FBX file (`UCX_SM_Corvette4C_B
 | BP3 | `SOCKET_RailGrip_22` | `_Head` | 6.6600 | 1.7974 |
 
 All at local Y 0.90, Z 0.05. Positions come from `build_stats.json` (`rail_grips`).
+
+
+## Collision naming fix for parts and tubes (2026-10-30, 08:15 CDT)
+UE imported 0 UCX on the part and tube FBXs because their hulls were named after the LodGroup empty (`UCX_SM_Corvette4C_Turret_01_Gun_00`) instead of the LOD0 mesh. They are now `UCX_<LOD0 mesh name>_NN`.
+- 50 files, 106 UCX renamed: 22 4C parts (1 each), 16 Fighter parts (1 each), BP2 and BP3 combined (17 each), and 10 tube parts (5 per walkable section, 1 per door). The same files in `art/models/` were renamed too.
+- The FBX files were rewritten byte for byte, with only the UCX Model and Geometry name strings changed (`/workspace/space_rpg/scripts/fbx_rename_ucx.py`; a no-change round trip is byte-identical). Geometry, LODs, UVs, normals, pivots and sockets are untouched, including all rail grip sockets (21 on BP2, 27 on BP3).
+- The hull files (`UCX_SM_Corvette4C_Hull_NN` ×140, `UCX_SM_FighterC_Hull_NN` ×52) were already correct and weren't changed.
+- `build_corvette4c.py`, `build_fighter_c.py` and `build_boarding_tubes.py` now pass `target=<LOD0 mesh>.name` to the export, so future builds name UCX the same way.
+- Re-import check: every UCX prefix matches a mesh object name in its file (106/106, 0 mismatches). `verify_tubes.py` passes on all 12 tube files with no issues and every UCX convex. Both `verify_fbx.py` scripts pass.
+- In UE: delete the old part and tube assets (or Reimport with Auto Generate Collision OFF), then check Show > Simple Collision.
+
+## Materials: realism pass (2026-10-30, Forge)
+Matte, weathered hard-surface paint: tiling detail per material on **UV0**, plus a baked wear mask per mesh on **UV1**. No emissive anywhere. `M_*_Screen` is a dark, non-emissive panel and `M_*_Glass` is translucent, alpha 0.22. The **material slot names have not changed**, so existing assignments survive. **The FBXs were not re-exported**: no geometry, UV, pivot, socket, UCX or name changed.
+
+### Texture files (procedural, no outside sources; scripts: `art/models/Corvette4C/make_pbr_textures.py`, `tools/realism_mat.py`, `tools/make_stencils.py`)
+- `art/models/Fighter_C/textures/pbr/` and `art/models/Corvette4C/textures/pbr/` (the 4C sets are shared by the boarding tubes).
+- Per material, 2048² tiling: `T_<FC|C4C>_<Slot>_BC.png` (sRGB), `T_..._N.png` (**DirectX / UE green**; leave Flip Green Channel OFF), `T_..._ORM.png` (linear, sRGB OFF, compression *Masks*: R=AO, G=Roughness, B=Metallic).
+  - Fighter: Paint_Olive, Paint_OliveDark, Paint_Yellow, Hazard, Interior, Metal, Metal_Dark, TubeDark.
+  - 4C: Paint_OffWhite, Paint_Gray, Paint_DarkGray, Paint_Red, Paint_Hazard, Interior, Metal, Metal_Dark, TubeDark.
+- `T_Wear_Breakup.png` (one per folder, linear: R=chip breakup, G=grime breakup, B=fine scratches), sampled at UV0 × 0.37.
+- `masks/T_<MeshName>_Mask.png` (linear, sRGB OFF, compression *Masks* or BC7). Channels: R=AO, G=convex edge, B=dirt (cavity + vertical streaks + broad AO), A=stencils. Baked in Blender Cycles on UV1:
+  - Fighter: `T_SM_FighterC_Body_Mask` 4096² (body, shared UV1 atlas), plus masks for each of the 16 parts (1024², 2048² for parts over 3 m) (`T_SM_FighterC_<part>_Mask`).
+  - 4C: `T_SM_Corvette4C_Body_Mask` 4096², parts at 1024², with 2048² for parts larger than 8 m (front gear and gear doors, hangar doors, turret guns).
+  - Tubes: no baked mask. Their combined mesh reuses UV1 per section, so use the neutral mask (below).
+- `T_<FC|C4C>_Stencil_Side.png/.json`: the side-projection sheet the A channel was baked from (neutral IDs only: `4C-07`, `ACCESS 14`, `SECT 2`, `SECT 4`, `LIFT POINT`, fighter `RCS`; the existing `FTR-C-01` decal is unchanged). Source only; UE doesn't need it.
+- Texel density on UV0: Fighter 1 UV = 2 m → 1024 px/m; 4C hull at Tiling 0.3 → 1 tile ≈ 13 m → ~150 px/m of panel layout, plus the per-pixel breakup and world macro noise; tubes 1 UV = 2 m → 1024 px/m.
+
+### Master material `M_Master_ShipSurface` (build once; then every `M_FC_*` / `M_C4C_*` slot becomes a Material Instance of it under the **same name**)
+Opaque, Default Lit, Tangent Space Normal ON. Parameters: `BC`, `N`, `ORM`, `Breakup`, `WearMask` (default `T_Mask_Neutral` = R1 G0 B0 A0, a 4×4 texture you create), `Tiling` (FC 1.0, 4C 0.3, tubes 1.0 via a child MI if wanted), `EdgeWear` (paint 1.0, metal 0.6, rubber 0), `DirtGain` (FC 1.0, 4C 1.7, tubes 1.3), `MacroScale` (FC 0.1/m, 4C 0.042/m).
+```
+uv0 = TexCoord0 * Tiling;  bc,orm,n = BC/ORM/N(uv0);  bu = Breakup(uv0*0.37);  m = WearMask(TexCoord1)
+macro = 0.62 + 0.75 * Noise(AbsoluteWorldPosition(m→Blender units) * MacroScale)  // world-aligned breakup of tiling
+chip  = max( saturate((m.g*EdgeWear + (bu.r-0.5)*1.5 - 0.56) * 8),  saturate(bu.b*m.g*0.35*EdgeWear) )
+grime = saturate( saturate(m.b*DirtGain) * (bu.g+0.5) * 1.1 )
+sten  = saturate(m.a * (1 - bu.r*0.6));  stencilCol = lum(bc) > 0.18 ? 0.035 : 0.42
+Base  = lerp( lerp( lerp(bc*macro, stencilCol, sten), BareSteel(0.50,0.49,0.47), chip ), BaseC*(0.58,0.53,0.46), grime )
+Rough = max(0.30, saturate(lerp(orm.g, 0.38, chip) + grime*0.15))
+Metal = lerp(orm.b, 1, chip);   AO = orm.r * lerp(1, m.r, 0.6);   Normal = n (strength 0.6: lerp to (0,0,1) by 0.4)
+Emissive = 0
+```
+- The Blender materials in the source `.blend` files use the same graph (node group `NG_Wear_*` computes the mask live with AO and Bevel nodes), so the previews match UE.
+- **Assigning the per-mesh masks**: the slot MIs are shared between meshes, so set `WearMask` per component. In the ship Blueprint's Construction Script, for each StaticMeshComponent and each material index, call `CreateDynamicMaterialInstance` and then `SetTextureParameterValue("WearMask", T_<MeshAsset>_Mask)`. Body: `T_SM_Corvette4C_Body_Mask` / `T_SM_FighterC_Body_Mask`; each part: `T_<part name>_Mask`. Without it, the neutral mask gives clean tiling paint with no edge wear.
+- **LODs**: LOD1-3 have their own UV1 layout, so the LOD0 mask doesn't line up on them. Either lerp the mask to neutral by `PixelDepth` (4C ~150 m, fighter ~40 m, which is about where LOD1 kicks in), or point the LOD1+ sections at a non-MID copy of the slot in the Static Mesh editor.
+- Values used (linear albedo / roughness / metallic): 4C exterior OffWhite 0.58/0.56/0.51 (a lighter hull tone, by choice), Gray 0.30, DarkGray 0.085-0.09, Red 0.36/0.055/0.04, paint roughness 0.62-0.74 + grime, metallic 0. **4C Interior matches Echo-S `C4C_MaterialRealism.json` v1.8 M_C4C_PaintedSteel**: albedo 0.085-0.09 (spec 0.05-0.12), roughness 0.58-0.78 (spec 0.55-0.8), metallic 0. TubeDark = M_C4C_Rubber: 0.03, roughness 0.86-0.93. Edge-wear reveal = M_C4C_BareSteel: 0.50, metallic 1, roughness 0.38. Grime albedo multiplier about 0.55-0.6 on the exterior (stronger than the interior spec's 0.7-0.85; it's lerped by the mask), roughness +0.15. Metal 0.42 m1 r0.32-0.55; Metal_Dark 0.09 m0.85 r0.42-0.62. Fighter olive 0.135/0.15/0.085, OliveDark 0.065/0.075/0.045, Yellow 0.52/0.36/0.06. Nothing is below 0.02 albedo or under 0.30 roughness.
