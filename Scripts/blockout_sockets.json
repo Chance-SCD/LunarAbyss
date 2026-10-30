@@ -1,0 +1,2904 @@
+{
+"SM_Corvette4C_Interior_Blockout": [
+{
+"name": "SOCKET_Airlock_ALD",
+"loc": [
+-2469.5,
+-70.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Airlock_ALP",
+"loc": [
+3940.5,
+-830.0,
+1367.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Airlock_ALS",
+"loc": [
+-2504.5,
+865.0,
+1367.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Airlock_ALV",
+"loc": [
+1680.0,
+-360.0,
+487.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD05_A",
+"loc": [
+3105.5,
+-535.0,
+2562.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD05_B",
+"loc": [
+3105.5,
+-595.0,
+2562.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD06_A",
+"loc": [
+2995.5,
+-710.0,
+2562.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD06_B",
+"loc": [
+3055.5,
+-710.0,
+2562.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD07_A",
+"loc": [
+2155.5,
+-0.0,
+2562.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD07_B",
+"loc": [
+2215.5,
+-0.0,
+2562.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD08_A",
+"loc": [
+505.0,
+-0.0,
+2562.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD08_B",
+"loc": [
+565.0,
+-0.0,
+2562.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD09_A",
+"loc": [
+-1245.0,
+-0.0,
+2562.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD09_B",
+"loc": [
+-1185.0,
+-0.0,
+2562.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD28_A",
+"loc": [
+-2214.5,
+595.0,
+2562.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD28_B",
+"loc": [
+-2214.5,
+535.0,
+2562.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD30_A",
+"loc": [
+3105.5,
+-535.0,
+2032.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD30_B",
+"loc": [
+3105.5,
+-595.0,
+2032.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD35_A",
+"loc": [
+-2214.5,
+595.0,
+2032.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD35_B",
+"loc": [
+-2214.5,
+535.0,
+2032.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD39_A",
+"loc": [
+3105.5,
+-535.0,
+1632.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD39_B",
+"loc": [
+3105.5,
+-595.0,
+1632.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD46_A",
+"loc": [
+-2214.5,
+595.0,
+1632.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD46_B",
+"loc": [
+-2214.5,
+535.0,
+1632.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD51_A",
+"loc": [
+667.5,
+1330.0,
+1231.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD51_B",
+"loc": [
+667.5,
+1270.0,
+1231.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD52_A",
+"loc": [
+3047.5,
+1320.0,
+1231.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD52_B",
+"loc": [
+3047.5,
+1260.0,
+1231.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD53_A",
+"loc": [
+3105.5,
+-535.0,
+1231.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD53_B",
+"loc": [
+3105.5,
+-595.0,
+1231.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD56_A",
+"loc": [
+-1734.5,
+1425.0,
+1291.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD56_B",
+"loc": [
+-1674.5,
+1425.0,
+1291.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD57_A",
+"loc": [
+-2214.5,
+855.0,
+1231.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD57_B",
+"loc": [
+-2214.5,
+795.0,
+1231.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD59_A",
+"loc": [
+-2599.5,
+885.0,
+1231.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD59_B",
+"loc": [
+-2599.5,
+825.0,
+1231.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD60_A",
+"loc": [
+-2324.5,
+-0.0,
+1231.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD60_B",
+"loc": [
+-2264.5,
+-0.0,
+1231.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Beacon_DCD61_A",
+"loc": [
+-2214.5,
+595.0,
+1231.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD61_B",
+"loc": [
+-2214.5,
+535.0,
+1231.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD63_A",
+"loc": [
+-2214.5,
+595.0,
+752.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Beacon_DCD63_B",
+"loc": [
+-2214.5,
+535.0,
+752.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Beacon_DCD65_A",
+"loc": [
+575.0,
+-0.0,
+752.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Beacon_DCD65_B",
+"loc": [
+635.0,
+-0.0,
+752.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Boarding_BP1",
+"loc": [
+-2469.0,
+-70.0,
+2978.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Boarding_BP2",
+"loc": [
+3940.0,
+-1360.0,
+1487.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Boarding_BP3",
+"loc": [
+-2505.0,
+1583.0,
+1487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Boarding_BP4",
+"loc": [
+1680.0,
+-360.0,
+217.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Breach_C2A_01",
+"loc": [
+-2617.3,
+1085.0,
+966.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_C2SP_01",
+"loc": [
+570.9,
+1500.0,
+966.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_C3A_01",
+"loc": [
+-3204.5,
+420.0,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Breach_C4A_01",
+"loc": [
+-3054.5,
+498.0,
+1767.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Breach_C5PB_01",
+"loc": [
+2605.5,
+-795.0,
+2297.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Breach_D104_01",
+"loc": [
+1147.4,
+955.0,
+487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_D107_01",
+"loc": [
+-800.0,
+955.0,
+487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_D201_01",
+"loc": [
+3615.5,
+965.0,
+966.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_D202_01",
+"loc": [
+-2854.5,
+-144.9,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Breach_D301_01",
+"loc": [
+3253.4,
+1155.0,
+1367.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_D401_01",
+"loc": [
+3380.5,
+1115.0,
+1767.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_D512_01",
+"loc": [
+1077.4,
+-1195.0,
+2297.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Breach_D515_01",
+"loc": [
+60.0,
+855.0,
+2297.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Breach_D518_01",
+"loc": [
+-1714.7,
+-955.0,
+2297.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Camera_Cockpit",
+"loc": [
+4497.5,
+-95.0,
+2553.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_CIC_Table",
+"loc": [
+2965.3,
+-0.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Console_D202_01",
+"loc": [
+-2854.5,
+107.6,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D203_01",
+"loc": [
+-2234.5,
+-175.0,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D305_01",
+"loc": [
+-2554.5,
+-270.0,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D305_02",
+"loc": [
+-2554.5,
+-396.2,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D501_01",
+"loc": [
+3405.0,
+-164.9,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D501_02",
+"loc": [
+3405.0,
+164.9,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D503_01",
+"loc": [
+2645.5,
+175.0,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D503_02",
+"loc": [
+2645.5,
+-175.0,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Console_D519_01",
+"loc": [
+-1644.5,
+592.7,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DC_Central_Board",
+"loc": [
+-1459.7,
+580.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-05",
+"loc": [
+3105.5,
+-565.0,
+2297.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-06",
+"loc": [
+3025.5,
+-710.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-07",
+"loc": [
+2185.5,
+-0.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-08",
+"loc": [
+535.0,
+-0.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-09",
+"loc": [
+-1215.0,
+-0.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-28",
+"loc": [
+-2214.5,
+565.0,
+2297.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-30",
+"loc": [
+3105.5,
+-565.0,
+1767.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-35",
+"loc": [
+-2214.5,
+565.0,
+1767.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-39",
+"loc": [
+3105.5,
+-565.0,
+1367.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-46",
+"loc": [
+-2214.5,
+565.0,
+1367.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-52",
+"loc": [
+3047.5,
+1290.0,
+966.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-53",
+"loc": [
+3105.5,
+-565.0,
+966.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-56",
+"loc": [
+-1704.5,
+1425.0,
+966.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-57",
+"loc": [
+-2214.5,
+825.0,
+966.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-59",
+"loc": [
+-2599.5,
+855.0,
+966.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-60",
+"loc": [
+-2294.5,
+-0.0,
+966.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DC_DCD-61",
+"loc": [
+-2214.5,
+565.0,
+966.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-63",
+"loc": [
+-2214.5,
+565.0,
+487.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DC_DCD-65",
+"loc": [
+605.0,
+-0.0,
+487.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD05_A",
+"loc": [
+3010.5,
+-535.0,
+2417.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD05_B",
+"loc": [
+3200.5,
+-595.0,
+2417.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD06_A",
+"loc": [
+2995.5,
+-615.0,
+2417.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD06_B",
+"loc": [
+3055.5,
+-615.0,
+2417.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD07_A",
+"loc": [
+2155.5,
+95.0,
+2417.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD07_B",
+"loc": [
+2215.5,
+95.0,
+2417.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD08_A",
+"loc": [
+505.0,
+95.0,
+2417.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD08_B",
+"loc": [
+565.0,
+95.0,
+2417.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD09_A",
+"loc": [
+-1245.0,
+95.0,
+2417.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD09_B",
+"loc": [
+-1185.0,
+95.0,
+2417.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD28_A",
+"loc": [
+-2119.5,
+595.0,
+2417.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD28_B",
+"loc": [
+-2119.5,
+535.0,
+2417.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD30_A",
+"loc": [
+3200.5,
+-535.0,
+1887.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD30_B",
+"loc": [
+3200.5,
+-595.0,
+1887.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD35_A",
+"loc": [
+-2119.5,
+595.0,
+1887.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD35_B",
+"loc": [
+-2309.5,
+535.0,
+1887.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD39_A",
+"loc": [
+3200.5,
+-535.0,
+1487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD39_B",
+"loc": [
+3200.5,
+-595.0,
+1487.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD46_A",
+"loc": [
+-2119.5,
+595.0,
+1487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD46_B",
+"loc": [
+-2309.5,
+535.0,
+1487.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD51_A",
+"loc": [
+572.5,
+1330.0,
+1086.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD51_B",
+"loc": [
+572.5,
+1270.0,
+1086.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD52_A",
+"loc": [
+2952.5,
+1320.0,
+1086.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD52_B",
+"loc": [
+3142.5,
+1260.0,
+1086.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD53_A",
+"loc": [
+3010.5,
+-535.0,
+1086.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD53_B",
+"loc": [
+3200.5,
+-595.0,
+1086.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD56_A",
+"loc": [
+-1734.5,
+1310.0,
+1086.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD56_B",
+"loc": [
+-1674.5,
+1535.0,
+1086.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD57_A",
+"loc": [
+-2119.5,
+855.0,
+1086.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD57_B",
+"loc": [
+-2119.5,
+795.0,
+1086.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD59_A",
+"loc": [
+-2714.5,
+885.0,
+1086.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD59_B",
+"loc": [
+-2714.5,
+825.0,
+1086.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD60_A",
+"loc": [
+-2324.5,
+115.0,
+1086.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD60_B",
+"loc": [
+-2264.5,
+115.0,
+1086.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD61_A",
+"loc": [
+-2119.5,
+595.0,
+1086.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD61_B",
+"loc": [
+-2119.5,
+535.0,
+1086.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD63_A",
+"loc": [
+-2119.5,
+595.0,
+607.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD63_B",
+"loc": [
+-2119.5,
+535.0,
+607.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD65_A",
+"loc": [
+575.0,
+95.0,
+607.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_DoorPanel_DCD65_B",
+"loc": [
+635.0,
+95.0,
+607.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD05_A",
+"loc": [
+3210.5,
+-535.0,
+2517.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD05_B",
+"loc": [
+3210.5,
+-595.0,
+2517.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD06_A",
+"loc": [
+2995.5,
+-815.0,
+2517.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD06_B",
+"loc": [
+3055.5,
+-815.0,
+2517.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD07_A",
+"loc": [
+2155.5,
+-105.0,
+2517.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD07_B",
+"loc": [
+2215.5,
+-105.0,
+2517.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD08_A",
+"loc": [
+505.0,
+-105.0,
+2517.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD08_B",
+"loc": [
+565.0,
+-105.0,
+2517.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD09_A",
+"loc": [
+-1245.0,
+-105.0,
+2517.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD09_B",
+"loc": [
+-1185.0,
+-105.0,
+2517.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD28_A",
+"loc": [
+-2109.5,
+595.0,
+2517.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD28_B",
+"loc": [
+-2109.5,
+535.0,
+2517.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD30_A",
+"loc": [
+3210.5,
+-535.0,
+1987.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD30_B",
+"loc": [
+3210.5,
+-595.0,
+1987.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD35_A",
+"loc": [
+-2109.5,
+595.0,
+1987.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD35_B",
+"loc": [
+-2109.5,
+535.0,
+1987.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD39_A",
+"loc": [
+3210.5,
+-535.0,
+1587.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD39_B",
+"loc": [
+3210.5,
+-595.0,
+1587.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD46_A",
+"loc": [
+-2109.5,
+595.0,
+1587.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD46_B",
+"loc": [
+-2109.5,
+535.0,
+1587.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD51_A",
+"loc": [
+772.5,
+1330.0,
+1186.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD51_B",
+"loc": [
+772.5,
+1270.0,
+1186.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD52_A",
+"loc": [
+2942.5,
+1320.0,
+1186.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD52_B",
+"loc": [
+3152.5,
+1260.0,
+1186.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD53_A",
+"loc": [
+3210.5,
+-535.0,
+1186.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD53_B",
+"loc": [
+3210.5,
+-595.0,
+1186.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD56_A",
+"loc": [
+-1734.5,
+1300.0,
+1186.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD56_B",
+"loc": [
+-1674.5,
+1315.0,
+1186.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD57_A",
+"loc": [
+-2109.5,
+855.0,
+1186.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD57_B",
+"loc": [
+-2109.5,
+795.0,
+1186.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD59_A",
+"loc": [
+-2474.5,
+885.0,
+1186.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD59_B",
+"loc": [
+-2474.5,
+825.0,
+1186.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD60_A",
+"loc": [
+-2324.5,
+-125.0,
+1186.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD60_B",
+"loc": [
+-2264.5,
+-125.0,
+1186.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_DCD61_A",
+"loc": [
+-2109.5,
+595.0,
+1186.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD61_B",
+"loc": [
+-2109.5,
+535.0,
+1186.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD63_A",
+"loc": [
+-2109.5,
+595.0,
+707.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_EmLight_DCD63_B",
+"loc": [
+-2109.5,
+535.0,
+707.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_EmLight_DCD65_A",
+"loc": [
+575.0,
+-105.0,
+707.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_EmLight_DCD65_B",
+"loc": [
+635.0,
+-105.0,
+707.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STA_D1",
+"loc": [
+-2214.5,
+695.0,
+747.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STA_D2",
+"loc": [
+-2214.5,
+695.0,
+1226.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STA_D3",
+"loc": [
+-2214.5,
+695.0,
+1627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STA_D4",
+"loc": [
+-2214.5,
+695.0,
+2027.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STA_D5",
+"loc": [
+-2214.5,
+695.0,
+2557.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STF_D2",
+"loc": [
+3105.5,
+-710.0,
+1226.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STF_D3",
+"loc": [
+3105.5,
+-710.0,
+1627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STF_D4",
+"loc": [
+3105.5,
+-710.0,
+2027.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_EmLight_STF_D5",
+"loc": [
+3105.5,
+-710.0,
+2557.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD05_A",
+"loc": [
+3255.5,
+-535.0,
+2407.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD06_A",
+"loc": [
+2995.5,
+-830.0,
+2407.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD07_A",
+"loc": [
+2155.5,
+-120.0,
+2407.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD08_A",
+"loc": [
+505.0,
+-120.0,
+2407.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD09_A",
+"loc": [
+-1245.0,
+-120.0,
+2407.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD28_B",
+"loc": [
+-2064.5,
+535.0,
+2407.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD30_A",
+"loc": [
+3255.5,
+-535.0,
+1877.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD35_B",
+"loc": [
+-2064.5,
+535.0,
+1877.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD39_A",
+"loc": [
+3255.5,
+-535.0,
+1477.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD46_B",
+"loc": [
+-2064.5,
+535.0,
+1477.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD51_A",
+"loc": [
+817.5,
+1330.0,
+1076.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD52_A",
+"loc": [
+2897.5,
+1320.0,
+1076.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD53_A",
+"loc": [
+3255.5,
+-535.0,
+1076.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD56_A",
+"loc": [
+-1734.5,
+1255.0,
+1076.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD57_A",
+"loc": [
+-2064.5,
+855.0,
+1076.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD59_A",
+"loc": [
+-2429.5,
+885.0,
+1076.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD60_A",
+"loc": [
+-2324.5,
+-170.0,
+1076.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD61_B",
+"loc": [
+-2064.5,
+535.0,
+1076.7
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD63_B",
+"loc": [
+-2064.5,
+535.0,
+597.0
+],
+"yaw": -90.0
+},
+{
+"name": "SOCKET_Extinguisher_DCD65_A",
+"loc": [
+575.0,
+-120.0,
+597.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_HangarPersonnelDoor",
+"loc": [
+667.5,
+1300.0,
+966.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_C2SP_01",
+"loc": [
+822.0,
+1500.0,
+966.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_D101_01",
+"loc": [
+-165.7,
+-205.0,
+487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_D105_01",
+"loc": [
+2464.2,
+955.0,
+487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_D201_01",
+"loc": [
+3355.5,
+481.6,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D202_01",
+"loc": [
+-2854.5,
+233.9,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D203_01",
+"loc": [
+-2234.5,
+-300.0,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D301_01",
+"loc": [
+3065.5,
+344.1,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D305_01",
+"loc": [
+-2554.5,
+-522.4,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D401_01",
+"loc": [
+3065.5,
+323.2,
+1767.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D405_01",
+"loc": [
+-2554.5,
+-396.2,
+1767.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D407_01",
+"loc": [
+-2589.8,
+955.0,
+1767.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_D503_01",
+"loc": [
+2645.5,
+-300.0,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_OverheadPanel_D512_01",
+"loc": [
+1203.0,
+-665.0,
+2297.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_D514_01",
+"loc": [
+-93.3,
+-205.0,
+2297.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_OverheadPanel_D518_01",
+"loc": [
+-1867.8,
+-205.0,
+2297.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_PA_ALD_01",
+"loc": [
+-2469.5,
+-70.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_ALP_01",
+"loc": [
+3940.5,
+-830.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_ALS_01",
+"loc": [
+-2504.5,
+865.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_ALV_01",
+"loc": [
+1680.0,
+-360.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C1SPA_01",
+"loc": [
+-1801.3,
+-0.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C1SPA_02",
+"loc": [
+-844.8,
+-0.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C1SPA_03",
+"loc": [
+111.7,
+-0.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C1SPF_01",
+"loc": [
+1207.6,
+-0.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C1SPF_02",
+"loc": [
+2382.9,
+-0.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2A_01",
+"loc": [
+-2604.5,
+1000.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2SP_01",
+"loc": [
+-1209.8,
+1425.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2SP_02",
+"loc": [
+-250.4,
+1425.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2SP_03",
+"loc": [
+709.0,
+1425.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2SP_04",
+"loc": [
+1668.4,
+1425.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2SP_05",
+"loc": [
+2627.8,
+1425.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2X_01",
+"loc": [
+3134.0,
+818.8,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C2X_02",
+"loc": [
+3134.0,
+-93.8,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C3A_01",
+"loc": [
+-2867.0,
+420.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C3A_02",
+"loc": [
+-2102.0,
+420.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C3F_01",
+"loc": [
+3445.5,
+-420.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C3F_02",
+"loc": [
+4295.5,
+-420.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C4A_01",
+"loc": [
+-2409.5,
+420.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C4F_01",
+"loc": [
+3710.5,
+-420.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5FL_01",
+"loc": [
+2385.5,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5PB_01",
+"loc": [
+2605.5,
+-710.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5SPA_01",
+"loc": [
+-1734.7,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5SPF_01",
+"loc": [
+955.1,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5SPF_02",
+"loc": [
+1765.4,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5SPM_01",
+"loc": [
+-770.0,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_C5SPM_02",
+"loc": [
+90.0,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D101_01",
+"loc": [
+-405.0,
+-580.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D102_01",
+"loc": [
+1035.0,
+-480.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D103_01",
+"loc": [
+2440.3,
+-505.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D104_01",
+"loc": [
+1160.0,
+580.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D105_01",
+"loc": [
+2350.3,
+580.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D106_01",
+"loc": [
+210.0,
+580.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D107_01",
+"loc": [
+-800.0,
+580.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D108_01",
+"loc": [
+-1854.8,
+-480.0,
+817.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D201_01",
+"loc": [
+3615.5,
+230.0,
+1306.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D202_01",
+"loc": [
+-2604.5,
+95.0,
+1306.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D203_01",
+"loc": [
+-1999.5,
+-50.0,
+1306.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D204_01",
+"loc": [
+-2159.5,
+-915.0,
+1306.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D205_01",
+"loc": [
+4135.5,
+125.0,
+1286.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D301_01",
+"loc": [
+3240.5,
+470.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D302_01",
+"loc": [
+3770.5,
+170.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D303_01",
+"loc": [
+4400.5,
+220.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D305_01",
+"loc": [
+-2159.5,
+-270.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D306_01",
+"loc": [
+-2939.5,
+-220.0,
+1687.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D401_01",
+"loc": [
+3380.5,
+450.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D402_01",
+"loc": [
+4010.5,
+190.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D405_01",
+"loc": [
+-2159.5,
+-270.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D406_01",
+"loc": [
+-2864.5,
+-270.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D407_01",
+"loc": [
+-2704.5,
+790.0,
+2087.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D501_01",
+"loc": [
+3615.0,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D502_01",
+"loc": [
+3950.0,
+-0.0,
+2586.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D503_01",
+"loc": [
+2965.3,
+-0.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D512_01",
+"loc": [
+1090.0,
+-930.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D513_01",
+"loc": [
+1090.0,
+930.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D514_01",
+"loc": [
+60.0,
+-530.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D515_01",
+"loc": [
+60.0,
+530.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D516_01",
+"loc": [
+-815.0,
+-530.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D518_01",
+"loc": [
+-1714.7,
+-580.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PA_D519_01",
+"loc": [
+-1459.7,
+580.0,
+2627.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PlayerSpawn_Bridge",
+"loc": [
+3570.0,
+-0.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_PlayerSpawn_CaptainCabin",
+"loc": [
+1915.3,
+-530.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Reactor_Core",
+"loc": [
+-2604.5,
+100.0,
+966.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_ReactorVent",
+"loc": [
+-3070.7,
+88.2,
+530.6
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_Seat_Captain",
+"loc": [
+3650.0,
+-0.0,
+2297.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Seat_CoPilot",
+"loc": [
+4497.5,
+100.0,
+2431.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Seat_Pilot",
+"loc": [
+4497.5,
+-100.0,
+2431.7
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPA_01",
+"loc": [
+-1992.6,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPA_02",
+"loc": [
+-1418.6,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPA_03",
+"loc": [
+-844.8,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPA_04",
+"loc": [
+-270.8,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPA_05",
+"loc": [
+303.0,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPF_01",
+"loc": [
+913.8,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPF_02",
+"loc": [
+1501.4,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPF_03",
+"loc": [
+2089.1,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C1SPF_04",
+"loc": [
+2676.7,
+-0.0,
+822.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPA_01",
+"loc": [
+-1987.1,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPA_02",
+"loc": [
+-1482.4,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPF_01",
+"loc": [
+820.1,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPF_02",
+"loc": [
+1360.2,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPF_03",
+"loc": [
+1900.4,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPM_01",
+"loc": [
+-913.3,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPM_02",
+"loc": [
+-340.0,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_Spark_C5SPM_03",
+"loc": [
+233.3,
+-0.0,
+2632.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_SquadSpawn_Barracks",
+"loc": [
+4400.5,
+220.0,
+1367.0
+],
+"yaw": -0.0
+},
+{
+"name": "SOCKET_WaistPanel_C2SP_01",
+"loc": [
+696.4,
+1500.0,
+966.7
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_WaistPanel_D101_01",
+"loc": [
+-619.1,
+-205.0,
+487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_WaistPanel_D105_01",
+"loc": [
+2337.6,
+955.0,
+487.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_WaistPanel_D201_01",
+"loc": [
+3355.5,
+355.8,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D202_01",
+"loc": [
+-2854.5,
+-18.6,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D203_01",
+"loc": [
+-2234.5,
+175.0,
+966.7
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D301_01",
+"loc": [
+3065.5,
+470.0,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D305_01",
+"loc": [
+-2554.5,
+-143.8,
+1367.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D401_01",
+"loc": [
+3065.5,
+450.0,
+1767.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D405_01",
+"loc": [
+-2554.5,
+-270.0,
+1767.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D407_01",
+"loc": [
+-2717.2,
+955.0,
+1767.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_WaistPanel_D503_01",
+"loc": [
+2645.5,
+300.0,
+2297.0
+],
+"yaw": 180.0
+},
+{
+"name": "SOCKET_WaistPanel_D512_01",
+"loc": [
+1077.4,
+-665.0,
+2297.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_WaistPanel_D514_01",
+"loc": [
+213.3,
+-205.0,
+2297.0
+],
+"yaw": 90.0
+},
+{
+"name": "SOCKET_WaistPanel_D518_01",
+"loc": [
+-1561.7,
+-205.0,
+2297.0
+],
+"yaw": 90.0
+}
+],
+"SM_Corvette4C_Blockout": [
+{
+"name": "SOCKET_Hangar",
+"loc": [
+667.5,
+-100.0,
+966.7
+],
+"yaw": -90.0
+}
+]
+}
