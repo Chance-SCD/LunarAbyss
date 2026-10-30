@@ -10,6 +10,8 @@
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Engine/StaticMesh.h"
+#include "TimerManager.h"
 
 namespace
 {
@@ -62,6 +64,57 @@ AFighterPawn::AFighterPawn()
 	CockpitCamera->SetAutoActivate(false);
 
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
+	FighterMeshAsset = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/Ships/FighterC/SM_FighterC_Body.SM_FighterC_Body")));
+}
+
+void AFighterPawn::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (UStaticMesh* Mesh = FighterMeshAsset.LoadSynchronous())
+	{
+		// Real blockout is already in cm (imported metres x100): drop the cube scale and fix camera offsets.
+		Hull->SetStaticMesh(Mesh);
+		Hull->SetRelativeScale3D(FVector::OneVector);
+		// Forge FighterC v1.3 sockets (prefix stripped on import): Camera_Chase (-16, 0, 5.2) m, Camera_Cockpit.
+		if (Hull->DoesSocketExist(TEXT("Camera_Chase")))
+		{
+			const FVector C = Hull->GetSocketTransform(TEXT("Camera_Chase"), RTS_Component).GetLocation();
+			SpringArm->TargetArmLength = -C.X;
+			SpringArm->SocketOffset = FVector(0.f, 0.f, C.Z);
+		}
+		else
+		{
+			SpringArm->TargetArmLength = FMath::Max(1800.f, Mesh->GetBounds().BoxExtent.X * 2.f);
+		}
+		for (const TCHAR* S : { TEXT("Camera_Cockpit"), TEXT("SOCKET_Camera_Cockpit") })
+		{
+			if (Hull->DoesSocketExist(S))
+			{
+				CockpitCamera->AttachToComponent(Hull, FAttachmentTransformRules::SnapToTargetNotIncludingScale, S);
+				break;
+			}
+		}
+	}
+}
+
+void AFighterPawn::UnPossessed()
+{
+	Super::UnPossessed();
+	InThrottle = InStrafe = InLift = InPitch = InYaw = InRoll = 0.f;
+	bBoost = false;
+}
+
+void AFighterPawn::IgnoreActorForSeconds(AActor* Other, float Seconds)
+{
+	if (!Other) return;
+	Hull->IgnoreActorWhenMoving(Other, true);
+	TWeakObjectPtr<AFighterPawn> WeakThis(this);
+	TWeakObjectPtr<AActor> WeakOther(Other);
+	FTimerHandle H;
+	GetWorldTimerManager().SetTimer(H, [WeakThis, WeakOther]()
+	{
+		if (WeakThis.IsValid() && WeakOther.IsValid()) WeakThis->Hull->IgnoreActorWhenMoving(WeakOther.Get(), false);
+	}, Seconds, false);
 }
 
 void AFighterPawn::BuildInput()
@@ -153,6 +206,7 @@ void AFighterPawn::OnToggleCamera(const FInputActionValue&)
 void AFighterPawn::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (bParked) return;
 	const float Dt = FMath::Min(DeltaSeconds, 0.1f);
 
 	// --- Rotation (mouse is a per-frame delta, keys are rates) ---

@@ -23,6 +23,14 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual FVector GetVelocity() const override { return LinearVelocity; }
+	virtual void PostInitializeComponents() override;
+	virtual void UnPossessed() override;
+
+	/** Parked fighters don't integrate flight (they ride the hangar LaunchPoint). */
+	void SetParked(bool bNewParked) { bParked = bNewParked; if (bParked) LinearVelocity = FVector::ZeroVector; }
+	UFUNCTION(BlueprintPure, Category = "Flight") bool IsParked() const { return bParked; }
+	/** Ignore collisions with Other for Seconds (used when launching out of the bay). */
+	void IgnoreActorForSeconds(AActor* Other, float Seconds);
 
 	/** World velocity in cm/s (Unreal units). */
 	UFUNCTION(BlueprintCallable, Category = "Flight")
@@ -40,16 +48,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UCameraComponent> CockpitCamera;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float MaxSpeed = 450.f;      // m/s
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float MaxSpeed = 450.f;      // m/s (DT_Slice_ShipStats FighterC, TENTATIVE)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float BoostSpeed = 600.f;    // m/s
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float ForwardAccel = 40.f;   // m/s^2
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float ForwardAccel = 120.f;  // m/s^2 (DT_Slice_ShipStats FighterC)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float StrafeAccel = 25.f;    // m/s^2 (lateral + vertical)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Linear") float BoostAccelMultiplier = 1.5f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Angular") float PitchRate = 70.f;     // deg/s
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Angular") float PitchRate = 80.f;      // deg/s
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Angular") float YawRate = 70.f;       // deg/s
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Angular") float RollRate = 120.f;     // deg/s
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Angular") float RollRate = 150.f;     // deg/s
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight|Angular") float MouseSensitivity = 0.15f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flight") bool bFlightAssist = true;
+	/** Gray-box mesh; falls back to a scaled cube if not imported yet. */
+	UPROPERTY(EditAnywhere, Category = "Mesh") TSoftObjectPtr<UStaticMesh> FighterMeshAsset;
 
 private:
 	void BuildInput();
@@ -79,4 +89,5 @@ private:
 	float InThrottle = 0.f, InStrafe = 0.f, InLift = 0.f, InPitch = 0.f, InYaw = 0.f, InRoll = 0.f;
 	bool bBoost = false;
 	bool bCockpitView = false;
+	bool bParked = false;
 };

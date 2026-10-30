@@ -1,7 +1,9 @@
-﻿#include "LunarAbyssGameMode.h"
-#include "FighterPawn.h"
+#include "LunarAbyssGameMode.h"
+#include "CrewCharacter.h"
+#include "LunarAbyssPlayerController.h"
 
 ALunarAbyssGameMode::ALunarAbyssGameMode()
 {
-	DefaultPawnClass = AFighterPawn::StaticClass();
+	DefaultPawnClass = ACrewCharacter::StaticClass();
+	PlayerControllerClass = ALunarAbyssPlayerController::StaticClass();
 }
