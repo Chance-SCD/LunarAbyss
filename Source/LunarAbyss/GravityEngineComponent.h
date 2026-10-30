@@ -10,6 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGravityStateChanged, bool, bNowOnli
 
 UENUM(BlueprintType)
 enum class EGravityState : uint8 { On, Failing, Off, Restoring };
+struct FGravityStateCues { TArray<FString> Ids; TArray<TSoftObjectPtr<USoundBase>> Sounds; };
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGravityStateChanged, EGravityState, OldState, EGravityState, NewState);
 
 /**
@@ -51,6 +52,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Gravity") FGravityStateChanged OnGravityChanged;
 	UPROPERTY(BlueprintAssignable, Category = "Gravity") FOnGravityStateChanged OnGravityStateChanged;
+	/** Echo-S C4C_GravityAudioMap.json (project-relative). */
+	UPROPERTY(EditAnywhere, Category = "Gravity|Audio") FString GravityAudioMapFile = TEXT("Data/C4C_GravityAudioMap.json");
+	TArray<FString> LastPlayedCues;
 	UFUNCTION(BlueprintPure, Category = "Gravity") EGravityState GetGravityState() const { return State; }
 
 	/** Echo-S C4C_SoundList: SND_4C_GRV_001 (-> Off/Failing), SND_4C_GRV_002 (Restoring -> On), SND_4C_GRV_003 (PA, -> Off once per outage). */
@@ -71,5 +75,9 @@ private:
 	bool bPAPlayedThisOutage = false;
 	void SetState(EGravityState NewState);
 	void PlayGravitySound(const TSoftObjectPtr<USoundBase>& Sound, bool bWithShipWide);
+	UFUNCTION() void HandleGravityStateChanged(EGravityState Old, EGravityState New);
+	void LoadGravityAudioMap();
+	TMap<EGravityState, FGravityStateCues> StateCues;
+	UPROPERTY() TObjectPtr<class UAudioComponent> SpinDownTail;
 	TSet<TWeakObjectPtr<ACrewCharacter>> Floating; // crew currently in zero-g from us
 };

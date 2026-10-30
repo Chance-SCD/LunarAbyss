@@ -44,9 +44,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ladder|Hatch") float HatchOpenTime = 0.6f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ladder|Hatch") float HatchCloseDelay = 2.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ladder|Hatch") FName HatchSocket = TEXT("Hatch_DCD77");
-	/** Authored hinge / trigger centre in ship space (UE cm), Atlas-V: Blender (28.40,-13.50,13.117) / (27.70,-13.50,13.867). Used if the socket is off. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ladder|Hatch") FVector HatchHingeLocal = FVector(2840.f, 1350.f, 1311.7f);
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ladder|Hatch") FVector HatchTriggerLocal = FVector(2770.f, 1350.f, 1386.7f);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ladder|Hatch") FName HatchTriggerSocket = TEXT("Trig_Hatch_DCD77");
 	/** Hatch slab: top face Z (world cm) and thickness; set from the hinge socket at BeginPlay. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ladder|Hatch") float HatchTopZ = 1311.7f;

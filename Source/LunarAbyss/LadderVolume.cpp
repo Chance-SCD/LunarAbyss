@@ -72,18 +72,9 @@ void ALadderVolume::SnapHatchToSockets()
 	if (!bHasHatch || !GetWorld()) return;
 	for (TActorIterator<ACorvetteHangar> It(GetWorld()); It; ++It)
 	{
-		FTransform H, Tr; bool bTrigFallback = false;
-		bool bH = It->GetSocketTransform(HatchSocket, H);
-		const FVector C = GetShaftCentre();
-		if (bH && FVector2D::Distance(FVector2D(H.GetLocation()), FVector2D(C)) > 150.f)
-		{
-			// The interior's imported sockets come in displaced (see report); fall back to Atlas-V's authored hinge.
-			UE_LOG(LogTemp, Warning, TEXT("%s: socket %s at %s is %.0f cm off the shaft; using authored hinge %s"), *GetName(), *HatchSocket.ToString(), *H.GetLocation().ToString(),
-				FVector2D::Distance(FVector2D(H.GetLocation()), FVector2D(C)), *It->GetActorTransform().TransformPosition(HatchHingeLocal).ToString());
-			H = FTransform(It->GetActorRotation(), It->GetActorTransform().TransformPosition(HatchHingeLocal));
-			Tr = FTransform(It->GetActorRotation(), It->GetActorTransform().TransformPosition(HatchTriggerLocal));
-			bTrigFallback = true;
-		}
+		FTransform H, Tr;
+		const bool bH = It->GetSocketTransform(HatchSocket, H);
+		if (!bH) UE_LOG(LogTemp, Warning, TEXT("%s: interior socket %s missing"), *GetName(), *HatchSocket.ToString());
 		if (bH)
 		{
 			// Hinge pivot. The leaf extends along local -X (1.4 m) and -Z (thickness) from it.
@@ -91,7 +82,7 @@ void ALadderVolume::SnapHatchToSockets()
 			HatchTopZ = H.GetLocation().Z;
 			bHatchSnapped = true;
 		}
-		if (bTrigFallback || It->GetSocketTransform(HatchTriggerSocket, Tr)) HatchTrigger->SetWorldLocation(Tr.GetLocation());
+		if (It->GetSocketTransform(HatchTriggerSocket, Tr)) HatchTrigger->SetWorldLocation(Tr.GetLocation());
 		else HatchTrigger->SetWorldLocation(FVector(GetShaftCentre().X, GetShaftCentre().Y, HatchTopZ + 75.f));
 		break;
 	}
@@ -102,6 +93,14 @@ void ALadderVolume::SnapHatchToSockets()
 		Hatch->AddLocalOffset(FVector(-70.f / 1.4f, 0.f, -12.5f / 0.25f)); // cube is centred: move it so the hinge edge sits on the pivot
 	}
 	HatchRestRel = Hatch->GetRelativeTransform();
+	// QA-140: the ladder clamp must engage before the hatch's own pawn collision does, so take the
+	// closed leaf's real top/thickness from the mesh bounds instead of assuming hinge Z / 25 cm.
+	Hatch->UpdateBounds();
+	if (Hatch->GetStaticMesh())
+	{
+		const FBox B = Hatch->Bounds.GetBox();
+		if (B.IsValid && B.Max.Z - B.Min.Z > 1.f) { HatchTopZ = B.Max.Z; HatchThickness = B.Max.Z - B.Min.Z; }
+	}
 	UE_LOG(LogTemp, Log, TEXT("%s hatch: snapped=%d placeholder=%d topZ=%.1f mesh=%s tick=%d"), *GetName(), bHatchSnapped, bHatchPlaceholder, HatchTopZ, *GetNameSafe(Hatch->GetStaticMesh()), PrimaryActorTick.bCanEverTick);
 }
 
@@ -111,7 +110,7 @@ bool ALadderVolume::RequestHatchOpen()
 	if (bHatchPressureLocked)
 	{
 		LastPrompt = TEXT("DCD-77 LOCKED - pressure differential. Climb back up.");
-		if (GEngine) GEngine->AddOnScreenDebugMessage(0x77, 0.25f, FColor::Red, LastPrompt);
+		if (GEngine) GEngine->AddOnScreenDebugMessage(0x77, 2.0f, FColor::Red, LastPrompt);
 		return false;
 	}
 	LastOpenRequest = GetWorld()->GetTimeSeconds();

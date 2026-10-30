@@ -205,6 +205,7 @@ void ACrewCharacter::StartFall()
 	bTrackingFall = true;
 	FallApexZ = GetActorLocation().Z; // capsule centre: same delta as feet height
 	bFallStartedLowG = bGravityRestoring;
+	{ TArray<AActor*> Ov; GetOverlappingActors(Ov, ALadderVolume::StaticClass()); bFallStartedInShaft = Ov.Num() > 0 || Ladder != nullptr; }
 }
 
 void ACrewCharacter::SetShipGravityScale(float Scale)
@@ -265,7 +266,8 @@ void ACrewCharacter::Landed(const FHitResult& Hit)
 	if (EquivDropM > FallSafeHeight)
 	{
 		float Dmg = FallDamagePerMetre * (EquivDropM - FallSafeHeight);
-		if (bFallStartedLowG) Dmg = FMath::Min(Dmg, MaxHealth * RestoreFallDamageCapPct / 100.f);
+		if (bFallStartedLowG) Dmg = FMath::Min(Dmg, MaxHealth * RestoreFallDamageCapPct / 100.f); // 40% = 56 HP outside the shaft
+		if (bFallStartedInShaft) { UE_LOG(LogTemp, Log, TEXT("Fall started in a ladder shaft: no-fall zone, 0 HP (was %.1f)"), Dmg); Dmg = 0.f; }
 		LastFallDamage = Dmg;
 		TakeDamage(Dmg, FDamageEvent(), GetController(), this);
 		UE_LOG(LogTemp, Log, TEXT("Fall %.2f m, impact %.2f m/s (equiv %.2f m) at %.2f g%s -> %.1f damage (HP %.1f)"), DropM, V, EquivDropM, G, bFallStartedLowG ? TEXT(" (restore cap)") : TEXT(""), Dmg, Health);

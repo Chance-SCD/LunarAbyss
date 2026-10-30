@@ -27,7 +27,7 @@ public:
 private:
 	void Log(const FString& S);
 	void Result(const FString& Item, bool bPass, const FString& Detail);
-	void Shot(const FString& Name);
+	void Shot(const FString& Name, bool bUI = false);
 	void Next(float Delay = 0.f) { ++Step; StepTime = -Delay; SubStep = 0; }
 	void TeleportCrew(const FVector& ShipM, float YawDeg = 0.f);
 	bool WalkTo(const FVector2D& ShipXYm, float Dt);
@@ -39,7 +39,7 @@ private:
 	UPROPERTY() TObjectPtr<ACorvetteHangar> Ship;
 
 	int32 Step = -1, SubStep = 0, Waypoint = 0, FallIndex = 0, Passes = 0, Fails = 0;
-	float StepTime = 0.f, TotalTime = 0.f, LogTimer = 0.f, Z0 = 0.f, ZMax = 0.f, H0 = 0.f, MinAbsY = 1e9f, FallStartFeet = 0.f, MaxHatchAlpha = 0.f, HatchWaitTime = 0.f;
+	float StepTime = 0.f, TotalTime = 0.f, LogTimer = 0.f, Z0 = 0.f, ZMax = 0.f, H0 = 0.f, MinAbsY = 1e9f, FallStartFeet = 0.f, MaxHatchAlpha = 0.f, HatchWaitTime = 0.f, SlideLog = 0.f, HatchCrossT = -1.f;
 	bool bLeftGround = false;
 	TArray<FString> Lines;
 	TArray<FString> Shots;

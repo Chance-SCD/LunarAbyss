@@ -5,6 +5,7 @@
 #include "CorvetteHangar.h"
 #include "GravityEngineComponent.h"
 #include "EngineUtils.h"
+#include "HAL/IConsoleManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -13,7 +14,9 @@
 #include "UnrealClient.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LadderVolume.h"
+#include "Components/BoxComponent.h"
 #include "EngineUtils.h"
+#include "HAL/IConsoleManager.h"
 
 namespace
 {
@@ -23,7 +26,7 @@ namespace
 	// X 34.70..36.01; flights run aft in lane A (Y 5.80..7.05) and fore in lane B (Y 7.15..8.40) going down. 8 flights D5->D2.
 	const FVector2D DownLoop[4] = { {31.05, 6.43}, {35.35, 6.43}, {35.35, 7.78}, {31.05, 7.78} };
 	const FVector2D UpLoop[4]   = { {31.05, 7.78}, {35.35, 7.78}, {35.35, 6.43}, {31.05, 6.43} };
-	const float FallHeights[4] = { 2.f, 4.f, 6.f, 9.f };
+	const float FallHeights[5] = { 2.f, 4.f, 6.f, 9.f, 11.f };
 }
 
 ASlicePlaytest::ASlicePlaytest() { PrimaryActorTick.bCanEverTick = true; PrimaryActorTick.TickGroup = TG_PrePhysics; }
@@ -47,10 +50,10 @@ void ASlicePlaytest::Result(const FString& Item, bool bPass, const FString& Deta
 	Log(FString::Printf(TEXT("RESULT | %s | %s | %s"), *Item, bPass ? TEXT("PASS") : TEXT("FAIL"), *Detail));
 }
 
-void ASlicePlaytest::Shot(const FString& Name)
+void ASlicePlaytest::Shot(const FString& Name, bool bUI)
 {
 	const FString File = FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir() / TEXT("Screenshots/Playtest01") / (Name + TEXT(".png")));
-	FScreenshotRequest::RequestScreenshot(File, false, false);
+	FScreenshotRequest::RequestScreenshot(File, bUI, false);
 	Shots.Add(Name + TEXT(".png"));
 	Log(TEXT("SHOT ") + Name);
 }
@@ -154,7 +157,7 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 
 	case 4: // Falls in the hangar at Hangar_Spot_Dropship
 	{
-		if (FallIndex >= 4) { Next(0.5f); break; }
+		if (FallIndex >= 5) { Next(0.5f); break; }
 		const float Hm = FallHeights[FallIndex];
 		if (SubStep == 0)
 		{
@@ -180,7 +183,8 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 			const float ExpectFromDrop = Hd > 3.f ? 15.f * (Hd - 3.f) : 0.f;
 			Result(FString::Printf(TEXT("Fall %.0f m (drop vs v^2/2g within 0.1 m)"), Hm), FMath::Abs(Eq - Hd) <= 0.1f && FMath::Abs(Dmg - Expect) <= 0.05f,
 				FString::Printf(TEXT("drop %.3f m, impact %.3f m/s -> v^2/2g %.3f m (err %+.3f m), damage %.2f HP (formula on drop %.2f)"), Hd, Crew->LastImpactSpeed, Eq, Eq - Hd, Dmg, ExpectFromDrop));
-			if (FallIndex == 3) Shot(TEXT("04_hangar_after_falls"));
+			if (Hm > 10.f) Result(TEXT("QA-142 fall 11 m = 120 +/-1 HP"), FMath::Abs(Dmg - 120.f) <= 1.f, FString::Printf(TEXT("drop %.3f m, impact %.3f m/s, damage %.2f HP"), Hd, Crew->LastImpactSpeed, Dmg));
+			if (FallIndex == 4) Shot(TEXT("04_hangar_after_falls"));
 			++FallIndex; SubStep = 0; StepTime = -0.5f;
 		}
 		break;
@@ -260,7 +264,7 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 		if (SubStep == 0)
 		{
 			if (PC->GetPawn() != Crew) PC->SwitchToCrew();
-			Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(27.7, -13.5, 20.0), 0.f); SubStep = 1; StepTime = -0.5f; break;
+			Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(27.7, -13.5, 20.0), 0.f); HatchCrossT = -1.f; SubStep = 1; StepTime = -0.5f; break;
 		}
 		if (SubStep == 1) { Z0 = FeetZm; StepTime = 0; SubStep = 2; Log(FString::Printf(TEXT("ladder: on=%d feet %.2f"), Crew->IsOnLadder(), FeetZm)); break; }
 		if (SubStep == 2 && StepTime > 1.5f)
@@ -281,11 +285,16 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 			ALadderVolume* L = Crew->GetLadder();
 			MaxHatchAlpha = FMath::Max(MaxHatchAlpha, L->HatchAlpha);
 			if (Crew->bHatchStopped) HatchWaitTime += DeltaSeconds;
-			if (FeetZm < 14.0f && L->HatchAlpha > 0.5f && !Shots.Contains(TEXT("12_hatch_DCD77_open.png"))) Shot(TEXT("12_hatch_DCD77_open"));
+			if ((SlideLog += DeltaSeconds) >= 0.2f) { SlideLog = 0; Log(FString::Printf(TEXT("QA-143 slide t=%.2f feet %.2f m hatch %.2f"), StepTime, FeetZm, L->HatchAlpha)); }
+			if (FeetZm <= (L->HatchTrigger->GetComponentLocation().Z + 75.f) / M && HatchCrossT < 0) HatchCrossT = StepTime; // entering the trigger (top 14.617)
+			PC->SetControlRotation(FRotator(-75.f, 0.f, 0.f)); // look down the shaft at the hatch
+			if (FeetZm < 14.3f && L->HatchAlpha > 0.99f && !Shots.Contains(TEXT("12_hatch_DCD77_open.png"))) Shot(TEXT("12_hatch_DCD77_open"));
 		}
 		if (SubStep == 5 && (!Crew->IsOnLadder() || StepTime > 12.f))
 		{
 			const float Dmg = Crew->MaxHealth - Crew->Health;
+			Result(TEXT("QA-143 descent trigger top (14.62 m) -> D2 floor ~2.2-2.5 s at 2 m/s"), HatchCrossT >= 0 && (StepTime - HatchCrossT) > 2.0f && (StepTime - HatchCrossT) < 2.7f,
+				FString::Printf(TEXT("%.2f s from 14.62 m to exit at %.2f m (pure 2 m/s: %.2f s)"), StepTime - HatchCrossT, FeetZm, (14.617f - 9.667f) / 2.f));
 			Result(TEXT("QA-140 hatch DCD-77 auto-opens on the slide (0.6 s), no stop"), MaxHatchAlpha >= 0.999f && HatchWaitTime < 0.05f,
 				FString::Printf(TEXT("max hatch open %.2f, held at hatch %.2f s"), MaxHatchAlpha, HatchWaitTime));
 			Result(TEXT("Ladder: restore resumes slide, exit at bottom (Walking), no fall damage"), !Crew->IsOnLadder() && FMath::Abs(FeetZm - 9.667f) < 0.2f && Dmg < 0.01f && Move->MovementMode == MOVE_Walking,
@@ -301,12 +310,12 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 	{
 		ALadderVolume* L = nullptr; for (TActorIterator<ALadderVolume> It(GetWorld()); It; ++It) { L = *It; break; }
 		if (!L) { Result(TEXT("QA-140 locked hatch"), false, TEXT("no ladder")); Next(); break; }
-		if (SubStep == 0) { L->bHatchPressureLocked = true; Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(27.7, -13.5, 17.0), 0.f); SubStep = 1; StepTime = -0.5f; break; }
+		if (SubStep == 0) { L->bHatchPressureLocked = true; PC->SetControlRotation(FRotator(-75.f, 0.f, 0.f)); Crew->Health = Crew->MaxHealth; TeleportCrew(FVector(27.7, -13.5, 17.0), 0.f); SubStep = 1; StepTime = -0.5f; break; }
 		if (SubStep == 1 && StepTime > 3.5f)
 		{
-			Result(TEXT("QA-140 locked: slide stops on the hatch + LOCKED prompt"), Crew->IsOnLadder() && Crew->bHatchStopped && FMath::Abs(FeetZm - 13.137f) < 0.1f && !L->LastPrompt.IsEmpty() && L->HatchAlpha < 0.001f,
-				FString::Printf(TEXT("on=%d stopped=%d feet %.2f m, hatch %.2f, prompt '%s'"), Crew->IsOnLadder(), Crew->bHatchStopped, FeetZm, L->HatchAlpha, *L->LastPrompt));
-			Shot(TEXT("13_hatch_locked_prompt")); Z0 = FeetZm; SubStep = 2; StepTime = 0; break;
+			Result(TEXT("QA-140 locked: slide stops on the hatch + LOCKED prompt"), Crew->IsOnLadder() && Crew->bHatchStopped && FMath::Abs(FeetZm - (L->HatchTopZ / M + 0.02f)) < 0.1f && !L->LastPrompt.IsEmpty() && L->HatchAlpha < 0.001f,
+				FString::Printf(TEXT("on=%d stopped=%d feet %.2f m (leaf top %.3f m), hatch %.2f, prompt '%s'"), Crew->IsOnLadder(), Crew->bHatchStopped, FeetZm, L->HatchTopZ / M, L->HatchAlpha, *L->LastPrompt));
+			PC->SetControlRotation(FRotator(-75.f, 0.f, 0.f)); L->RequestHatchOpen(); Shot(TEXT("13_hatch_locked_prompt"), true); Z0 = FeetZm; SubStep = 2; StepTime = 0; break;
 		}
 		if (SubStep == 2) { Crew->SetLadderInput(1.f); if (StepTime > 2.f) { Result(TEXT("QA-140 locked: can climb back up"), Crew->IsOnLadder() && FeetZm - Z0 > 1.0f, FString::Printf(TEXT("%.2f -> %.2f m"), Z0, FeetZm)); L->bHatchPressureLocked = false; SubStep = 3; StepTime = 0; } break; }
 		if (SubStep == 3 && (!Crew->IsOnLadder() || StepTime > 10.f))
@@ -320,6 +329,8 @@ void ASlicePlaytest::Tick(float DeltaSeconds)
 
 	default:
 	{
+		if (IConsoleVariable* CV = IConsoleManager::Get().FindConsoleVariable(TEXT("r.MegaLights.Allow"))) Log(FString::Printf(TEXT("r.MegaLights.Allow = %d"), CV->GetInt()));
+		if (Ship && Ship->GravityEngine) Log(TEXT("gravity cues played: ") + FString::Join(Ship->GravityEngine->LastPlayedCues, TEXT(", ")));
 		Log(FString::Printf(TEXT("DONE: %d pass, %d fail. Screenshots: %s"), Passes, Fails, *FString::Join(Shots, TEXT(", "))));
 		const FString Path = FPaths::ProjectSavedDir() / TEXT("Playtest/results.txt");
 		FFileHelper::SaveStringToFile(FString::Join(Lines, TEXT("\n")), *Path);

@@ -66,6 +66,7 @@ public:
 	/** On the ladder and held at the DCD-77 hatch (locked, or still opening). */
 	bool bHatchStopped = false;
 	bool bHatchBlocked = false; // pressure-locked
+	bool bFallStartedInShaft = false; // LT-H shaft is a no-fall zone: 0 HP
 	ALadderVolume* GetLadder() const { return Ladder; }
 	// QA-142 fall diagnostics (last landing)
 	float LastAirVz = 0.f, LastAirZ = 0.f, LastImpactSpeed = 0.f, LastEquivDropM = 0.f, LastDropM = 0.f, LastFallDamage = 0.f;
