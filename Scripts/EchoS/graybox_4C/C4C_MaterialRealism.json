@@ -1,0 +1,153 @@
+{
+ "version": "1.8",
+ "note": "Linear albedo, roughness 0..1. Grime and wear come from baked AO + curvature masks (UV1); world-aligned macro noise breaks up tiling.",
+ "materials": {
+  "M_C4C_PaintedSteel": {
+   "albedo_linear": [
+    0.05,
+    0.12
+   ],
+   "roughness": [
+    0.55,
+    0.8
+   ],
+   "metallic": 0,
+   "use": "walls, bulkheads, frames (hull gray / green-gray)"
+  },
+  "M_C4C_BareSteel": {
+   "albedo_linear": [
+    0.45,
+    0.6
+   ],
+   "roughness": [
+    0.35,
+    0.55
+   ],
+   "metallic": 1,
+   "use": "edge-wear reveal, rails, ladder rungs"
+  },
+  "M_C4C_DeckTread": {
+   "albedo_linear": [
+    0.04,
+    0.08
+   ],
+   "roughness": [
+    0.6,
+    0.75
+   ],
+   "metallic": 0.6,
+   "use": "deck plate, diamond tread"
+  },
+  "M_C4C_Rubber": {
+   "albedo_linear": [
+    0.02,
+    0.04
+   ],
+   "roughness": [
+    0.85,
+    0.95
+   ],
+   "metallic": 0,
+   "use": "seals, gaskets, mats"
+  },
+  "M_C4C_Fabric": {
+   "albedo_linear": [
+    0.04,
+    0.1
+   ],
+   "roughness": [
+    0.8,
+    0.95
+   ],
+   "metallic": 0,
+   "use": "webbing, seats, insulation blankets"
+  },
+  "M_C4C_Composite": {
+   "albedo_linear": [
+    0.06,
+    0.1
+   ],
+   "roughness": [
+    0.5,
+    0.7
+   ],
+   "metallic": 0,
+   "use": "console housings"
+  },
+  "M_FixtureLens": {
+   "albedo_linear": [
+    0.6,
+    0.8
+   ],
+   "roughness": [
+    0.05,
+    0.15
+   ],
+   "opacity": 0.85,
+   "emissive": "lens face only, 150-400 nits, 8-12 cm; never strips; light comes from the light actor",
+   "use": "frosted polycarbonate"
+  },
+  "M_Kit_BurntMetal": {
+   "albedo_linear": [
+    0.02,
+    0.05
+   ],
+   "roughness": [
+    0.65,
+    0.9
+   ],
+   "metallic": 0.3,
+   "use": "Damaged/Breach decals and swapped kit"
+  },
+  "M_C4C_HangarFloor": {
+   "albedo_linear": [
+    0.06,
+    0.1
+   ],
+   "roughness": [
+    0.55,
+    0.8
+   ],
+   "metallic": 0,
+   "use": "painted deck with tyre marks; hazard stripes are paint, not emissive"
+  }
+ },
+ "layers": {
+  "grime": {
+   "mask": "AO cavity x height gradient from the deck",
+   "albedo_mult": [
+    0.7,
+    0.85
+   ],
+   "roughness_add": [
+    0.1,
+    0.2
+   ],
+   "coverage": "15-35%"
+  },
+  "edge_wear": {
+   "mask": "convex curvature > 0.6",
+   "metallic": 1,
+   "roughness": [
+    0.3,
+    0.45
+   ],
+   "coverage": "2-8% (2-4% on low-traffic decks)"
+  },
+  "micro_scratches": {
+   "roughness_variation": 0.08,
+   "scale_m": 0.25
+  },
+  "fluid_streaks": {
+   "where": "vertical, below vents and valves",
+   "albedo_mult": 0.8,
+   "roughness_add": -0.15
+  },
+  "not_allowed": [
+   "emissive trims or light strips",
+   "clean glossy paint (roughness < 0.45)",
+   "pure black albedo (< 0.02)"
+  ]
+ },
+ "texel_density": "1024 px/m hero (D2 corridors, hangar floor), 512 px/m elsewhere; 2048 trim sheets"
+}

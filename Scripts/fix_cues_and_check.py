@@ -52,6 +52,12 @@ else:
         if a.get_class().get_name() == "FighterPawn":
             for c in a.get_components_by_class(unreal.StaticMeshComponent):
                 if c.static_mesh is None or c.static_mesh.get_name() == "SM_FighterC_Body": c.set_static_mesh(fbody)
+    _im = unreal.load_asset("/Game/Blockouts/SM_Corvette4C_Interior_Blockout")
+    for n, e in (("Hatch_DCD77", (2840, 1350, 1311.7)), ("Seat_Pilot", (4497.5, -100, 2431.7)), ("DC_DCD-77", (2770, 1350, 1311.7)), ("Trig_Hatch_DCD77", (2770, 1350, 1386.7))):
+        sk = _im.find_socket(n)
+        if not sk: log("interior socket %s MISSING" % n); continue
+        L = sk.get_editor_property("relative_location"); d = (L - unreal.Vector(*e)).length()
+        log("interior socket %s = (%.1f, %.1f, %.1f) cm, expected %s, err %.2f cm -> %s" % (n, L.x, L.y, L.z, e, d, "OK" if d < 1.0 else "BAD"))
     for p in ("/Game/Ships/Corvette4C/SM_Corvette4C_Body", "/Game/Ships/FighterC/SM_FighterC_Body", "/Game/Blockouts/SM_Hatch_DCD77"):
         m = unreal.load_asset(p)
         log("collision %s: %d convex" % (p, len(m.get_editor_property("body_setup").get_editor_property("agg_geom").get_editor_property("convex_elems")) if m else -1))

@@ -1,0 +1,131 @@
+{
+ "rule": "baseline <= 12 shadow-casting lights in view",
+ "method": "own space + open-connected corridors in full + max 1 per door-connected room (a 1.2 x 2.4 m door frames about one 3.4 m-pitch fixture); stairs 1; hangar own + 1",
+ "hangar": 9,
+ "worst_spaces": [
+  {
+   "space": "C5-SPF",
+   "in_view": 12,
+   "breakdown": {
+    "C5-SPF": 1,
+    "D5-11": 1,
+    "D5-06": 1,
+    "D5-07": 1,
+    "D5-09": 1,
+    "D5-08": 1,
+    "D5-10": 1,
+    "C5-SPM": 2,
+    "D5-05": 1,
+    "D5-04": 1,
+    "C5-FL": 1
+   }
+  },
+  {
+   "space": "C1-SPF",
+   "in_view": 10,
+   "breakdown": {
+    "C1-SPF": 2,
+    "D1-02": 1,
+    "D1-04": 1,
+    "D1-03": 1,
+    "AL-V": 1,
+    "D1-05": 1,
+    "C1-SPA": 3
+   }
+  },
+  {
+   "space": "C1-SPA",
+   "in_view": 10,
+   "breakdown": {
+    "C1-SPA": 3,
+    "C1-AX": 1,
+    "D1-07": 1,
+    "C1-SPF": 2,
+    "D1-01": 1,
+    "D1-08": 1,
+    "D1-06": 1
+   }
+  },
+  {
+   "space": "C5-SPM",
+   "in_view": 8,
+   "breakdown": {
+    "C5-SPM": 2,
+    "D5-14": 1,
+    "C5-SPA": 1,
+    "D5-16": 1,
+    "C5-SPF": 1,
+    "D5-15": 1,
+    "D5-17": 1
+   }
+  },
+  {
+   "space": "C3-F",
+   "in_view": 8,
+   "breakdown": {
+    "C3-F": 2,
+    "ST-F": 1,
+    "D3-04": 1,
+    "D3-02": 1,
+    "AL-P": 1,
+    "D3-03": 1,
+    "D3-01": 1
+   }
+  },
+  {
+   "space": "C2-SP",
+   "in_view": 8,
+   "breakdown": {
+    "C2-SP": 4,
+    "LT-H": 1,
+    "C2-X": 2,
+    "C2-AJ": 1
+   }
+  },
+  {
+   "space": "C2-X",
+   "in_view": 8,
+   "breakdown": {
+    "C2-X": 2,
+    "D2-01": 1,
+    "C2-SP": 4,
+    "ST-F": 1
+   }
+  },
+  {
+   "space": "D5-03",
+   "in_view": 7,
+   "breakdown": {
+    "D5-03": 3,
+    "C5-HL": 1,
+    "ST-F": 1,
+    "D5-01": 1,
+    "C5-FL": 1
+   }
+  },
+  {
+   "space": "C5-SPA",
+   "in_view": 7,
+   "breakdown": {
+    "C5-SPA": 1,
+    "D5-18": 1,
+    "AL-D": 1,
+    "D5-19": 1,
+    "C5-SPM": 2,
+    "C5-AV": 1
+   }
+  },
+  {
+   "space": "C2-AJ",
+   "in_view": 7,
+   "breakdown": {
+    "C2-AJ": 1,
+    "C2-SP": 4,
+    "C2-A": 1,
+    "ST-A": 1
+   }
+  }
+ ],
+ "max_found": 12,
+ "passed": true
+}

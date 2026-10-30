@@ -11,8 +11,8 @@ Blender is right-handed and UE is left-handed: the importer flips Y, so rotation
 ## Import settings (Static Mesh)
 - Import Uniform Scale **1.0**; Convert Scene ON; Force Front XAxis OFF; Convert Scene Unit ON.
 - **Body files and each `parts/*.fbx`: Combine Meshes ON**, Import Mesh LODs ON. LODs arrive from the FBX LodGroup (`_LOD0.._LOD3`; parts carry LOD0-LOD1, tube parts LOD0-LOD3). Suggested screen sizes: 1.0 / 0.5 / 0.25 / 0.1.
-- Auto Generate Collision **OFF**: custom collision comes in as `UCX_<MeshName>_NN` convex hulls. Fighter body 52, 4C body 140, 1 per part, tubes 14 per tube (4 per walkable section + 1 per door).
-- Sockets: every `SOCKET_*` empty is **parented to its static mesh's LOD0 node** (fixed 2026-10-29 22:55, since UE drops unparented sockets): `SM_Corvette4C_Hull` (59), `SM_FighterC_Hull` (23), `SM_BoardingTube_BPx_LOD0` (5 each), and each turret or gun part's `_LOD0`. World position and rotation are unchanged (re-import check: ≤0.014 mm, ≤0.00002°).
+- Auto Generate Collision **OFF**: custom collision comes in as `UCX_<MeshObject>_NN` convex hulls, where `<MeshObject>` is the **exact mesh object name inside the FBX** (not the file name): `UCX_SM_Corvette4C_Hull_NN` (140) in both 4C Body and reference files, `UCX_SM_FighterC_Hull_NN` (52) in both Fighter Body and reference files, and `UCX_<part LodGroup name>_NN` for parts and tubes (the LodGroup node is named the same as the file). 1 per part, tubes 17 per tube (14 shell/door + 3 handrail); tube parts 5 per walkable section, 1 per door.
+- Sockets: every `SOCKET_*` empty is **parented to its static mesh's LOD0 node** (fixed 2026-10-29 22:55, since UE drops unparented sockets): `SM_Corvette4C_Hull` (59), `SM_FighterC_Hull` (23), `SM_BoardingTube_BPx_LOD0` (5 each + rail grips: 21 on BP2, 27 on BP3), tube parts' `_LOD0` (rail grips only), and each turret or gun part's `_LOD0`. World position and rotation are unchanged (re-import check: ≤0.014 mm, ≤0.00002°).
 - **UE socket names have the `SOCKET_` prefix stripped**: `SOCKET_Dock_Port` → `Dock_Port`, `SOCKET_DockCollar_Port` → `DockCollar_Port`, `SOCKET_Muzzle_L` → `Muzzle_L`. Socket tables below list the FBX names; use the stripped name in Blueprints and C++ (`GetSocketLocation("Dock_Port")`). Sockets come in relative to the combined mesh pivot = ship origin, so positions match the tables.
 - Normals: Import Normals and Tangents (the FBX has smoothing groups and custom split normals). Generate Lightmap UVs **OFF**: UV1 is a packed, non-overlapping lightmap channel on every static mesh (Lightmap Coordinate Index 1). UV0 is the tiling material channel.
 - Do **not** import `SM_FighterC.fbx` / `SM_Corvette4C.fbx` with Combine Meshes ON: that bakes the moving parts into the hull. Use the Body + parts route.
@@ -188,7 +188,88 @@ Combined-file tris (LOD0/LOD1/LOD2/LOD3): BP2 6,028 / 3,014 / 1,506 / ~600, BP3 
 ## Checks run on these copies (2026-10-29, Forge)
 - Fighter: verify_fbx passes. Scale 1, UV0+UV1 on all meshes, LOD0-3, 52 UCX all convex, all 16 pivots 0.0 mm from Juno's README, no emissive.
 - 4C: verify_fbx passes. 140 UCX convex, 59 sockets, LOD0-3, UV0+UV1.
-- Tubes: verify_tubes passes. LOD0-3, 14 UCX each, convex, named `UCX_<mesh>_NN`.
+- Tubes: verify_tubes passes. LOD0-3, 17 UCX each, convex, named `UCX_<mesh>_NN`.
 - UV1 overlap audit (512² raster) on every static mesh: 0 overlap, except the 4C hull at 0.02 % (raster edge noise). UV0 has no unintended flips.
 - Known leftover: one Fighter UCX (`UCX_SM_FighterC_51`, belly mid-section) has a 3 mm near-coplanar sliver under a strict 2 mm test. UE rebuilds hulls from the vertices, so it imports as a valid convex hull.
 - Open note: the tubes' UV0 is 2× the 4C hull's texel density (512 vs 256 px/m). It looks fine, but tiling won't line up exactly at the hull seam.
+
+## Collision naming fix (2026-10-30, 00:05 CDT) — SUPERSEDED by the 06:50 correction below; the UCX prefixes in this table are no longer used
+UE dropped the 4C Body collision because the hulls were `UCX_SM_Corvette4C_NN` while the asset is `SM_Corvette4C_Body`. Every FBX now uses `UCX_<file name>_NN`. Geometry, transforms, sockets and parenting are unchanged; only the UCX names differ.
+
+| FBX | UCX prefix | UCX | Sockets |
+|---|---|---|---|
+| Corvette4C/SM_Corvette4C_Body.fbx | `UCX_SM_Corvette4C_Body_` | 140 | 59 |
+| Corvette4C/SM_Corvette4C.fbx (reference) | `UCX_SM_Corvette4C_` | 140 | 59 |
+| Corvette4C/parts/SM_Corvette4C_<Part>.fbx (22) | `UCX_SM_Corvette4C_<Part>_` | 1 each | turret base 1, gun 2 |
+| FighterC/SM_FighterC_Body.fbx | `UCX_SM_FighterC_Body_` | 52 | 23 |
+| FighterC/SM_FighterC.fbx (reference) | `UCX_SM_FighterC_` | 52 | 23 |
+| FighterC/parts/SM_FighterC_<part>.fbx (16) | `UCX_SM_FighterC_<part>_` | 1 each | belly guns 1 |
+| FighterC/SK_FighterC.fbx | none (skeletal) | 0 | 0 |
+| Corvette4C_BoardingTubes/SM_BoardingTube_BP2/BP3.fbx | `UCX_SM_BoardingTube_BP2_` / `_BP3_` | 17 each | 5 each |
+| Corvette4C_BoardingTubes/parts/*_Base/_Bellows/_Head | `UCX_<file name>_` | 5 each | 0 |
+| Corvette4C_BoardingTubes/parts/*_Door_Inner/_Outer | `UCX_<file name>_` | 1 each | 0 |
+
+Stray objects: none in any of the 55 FBX (re-import check, no `Cube`/`Camera`/`Light` or unprefixed objects). The export functions now drop any such object and rename UCX to the file name automatically.
+If a `Cube` still shows in UE, delete the old imported assets first; it isn't in the current FBX.
+
+## Collision naming fix, corrected (2026-10-30, 06:50 CDT)
+The 00:05 fix was wrong: it named hulls after the FBX file (`UCX_SM_Corvette4C_Body_NN`). UE matches `UCX_` pieces to the **mesh object name inside the FBX** (Vega confirmed). The hulls belong to `SM_Corvette4C_Hull` / `SM_FighterC_Hull`, so they are now `UCX_SM_Corvette4C_Hull_NN` and `UCX_SM_FighterC_Hull_NN` in both the Body and reference files. The 4C and Fighter files were re-exported from the saved .blend (no rebuild); a re-import diff against the previous export shows identical vertices, UVs, transforms, materials, parenting and sockets (max difference 0.0). Only the UCX names changed. Parts and tubes already matched their LodGroup object names and were not renamed. **Delete the old imported 4C/Fighter Body assets before re-importing.**
+
+| FBX | UCX prefix (= object) | UCX | Sockets |
+|---|---|---|---|
+| Corvette4C/SM_Corvette4C_Body.fbx and SM_Corvette4C.fbx | `UCX_SM_Corvette4C_Hull_` | 140 | 59 |
+| Corvette4C/parts/SM_Corvette4C_<Part>.fbx (22) | `UCX_SM_Corvette4C_<Part>_` | 1 each | turret base 1, gun 2 |
+| FighterC/SM_FighterC_Body.fbx and SM_FighterC.fbx | `UCX_SM_FighterC_Hull_` | 52 | 23 |
+| FighterC/parts/SM_FighterC_<part>.fbx (16) | `UCX_SM_FighterC_<part>_` | 1 each | belly guns 1 |
+| Corvette4C_BoardingTubes/SM_BoardingTube_BP2/BP3.fbx | `UCX_SM_BoardingTube_BP2_` / `_BP3_` | 17 each | 21 / 27 |
+| Corvette4C_BoardingTubes/parts/*_Base / _Bellows / _Head | `UCX_<file name>_` | 5 each | grips: 1 / 14 (BP2) or 20 (BP3) / 1 |
+| Corvette4C_BoardingTubes/parts/*_Door_Inner / _Outer | `UCX_<file name>_` | 1 each | 0 |
+
+### Rail grip sockets (2026-10-30, 06:50 CDT, for Juno's RailPull regrab / Vega's hand IK)
+- `SOCKET_RailGrip_##` (UE name `RailGrip_##`), two digits, numbered **from the base outward**: `01` = `_Base` rail piece, then one per `_Bellows` rail piece (BP2 `02`–`15`, BP3 `02`–`21`), last = `_Head` piece (BP2 `16`, BP3 `22`). 16 on BP2, 22 on BP3.
+- Each sits at the **centre of its rail piece on the rail axis** (local Y 0.90, Z 0.05 = floor + 1.25 m), rotation identity: socket +X runs along the rail (outward), +Z up.
+- Parenting: in `parts/` each grip is a child of the LOD0 mesh of the part that carries that rail piece (`_Base_LOD0`, `_Bellows_LOD0`, `_Head_LOD0`), so bellows grips follow the bellows X-scale and the head grip travels with the head. In the combined `SM_BoardingTube_BPx.fbx` (static, extended) all grips are on `SM_BoardingTube_BPx_LOD0`, next to the 5 existing sockets (now 21 / 27 total).
+- **Retracted spacing:** the bellows scale X to 0.18 about the bellows pivot (X 0.65), so bellows grip spacing shrinks from 0.2943 m to 0.0530 m (BP2) and 0.2965 m to 0.0534 m (BP3); the base grip stays put and the head grip moves with the head. Use the nearest grip to the hand in world space at runtime; don't cache positions.
+
+| Tube | Socket | Part (parent in parts/) | Extended X | Retracted X |
+|---|---|---|---|---|
+| BP2 | `SOCKET_RailGrip_01` | `_Base` | 0.6050 | 0.6050 |
+| BP2 | `SOCKET_RailGrip_02` | `_Bellows` | 0.7971 | 0.6765 |
+| BP2 | `SOCKET_RailGrip_03` | `_Bellows` | 1.0914 | 0.7295 |
+| BP2 | `SOCKET_RailGrip_04` | `_Bellows` | 1.3857 | 0.7824 |
+| BP2 | `SOCKET_RailGrip_05` | `_Bellows` | 1.6800 | 0.8354 |
+| BP2 | `SOCKET_RailGrip_06` | `_Bellows` | 1.9743 | 0.8884 |
+| BP2 | `SOCKET_RailGrip_07` | `_Bellows` | 2.2686 | 0.9413 |
+| BP2 | `SOCKET_RailGrip_08` | `_Bellows` | 2.5629 | 0.9943 |
+| BP2 | `SOCKET_RailGrip_09` | `_Bellows` | 2.8571 | 1.0473 |
+| BP2 | `SOCKET_RailGrip_10` | `_Bellows` | 3.1514 | 1.1003 |
+| BP2 | `SOCKET_RailGrip_11` | `_Bellows` | 3.4457 | 1.1532 |
+| BP2 | `SOCKET_RailGrip_12` | `_Bellows` | 3.7400 | 1.2062 |
+| BP2 | `SOCKET_RailGrip_13` | `_Bellows` | 4.0343 | 1.2592 |
+| BP2 | `SOCKET_RailGrip_14` | `_Bellows` | 4.3286 | 1.3121 |
+| BP2 | `SOCKET_RailGrip_15` | `_Bellows` | 4.6229 | 1.3651 |
+| BP2 | `SOCKET_RailGrip_16` | `_Head` | 4.8500 | 1.4716 |
+| BP3 | `SOCKET_RailGrip_01` | `_Base` | 0.6050 | 0.6050 |
+| BP3 | `SOCKET_RailGrip_02` | `_Bellows` | 0.7983 | 0.6767 |
+| BP3 | `SOCKET_RailGrip_03` | `_Bellows` | 1.0947 | 0.7301 |
+| BP3 | `SOCKET_RailGrip_04` | `_Bellows` | 1.3912 | 0.7834 |
+| BP3 | `SOCKET_RailGrip_05` | `_Bellows` | 1.6877 | 0.8368 |
+| BP3 | `SOCKET_RailGrip_06` | `_Bellows` | 1.9842 | 0.8902 |
+| BP3 | `SOCKET_RailGrip_07` | `_Bellows` | 2.2807 | 0.9435 |
+| BP3 | `SOCKET_RailGrip_08` | `_Bellows` | 2.5772 | 0.9969 |
+| BP3 | `SOCKET_RailGrip_09` | `_Bellows` | 2.8737 | 1.0503 |
+| BP3 | `SOCKET_RailGrip_10` | `_Bellows` | 3.1702 | 1.1036 |
+| BP3 | `SOCKET_RailGrip_11` | `_Bellows` | 3.4667 | 1.1570 |
+| BP3 | `SOCKET_RailGrip_12` | `_Bellows` | 3.7632 | 1.2104 |
+| BP3 | `SOCKET_RailGrip_13` | `_Bellows` | 4.0598 | 1.2638 |
+| BP3 | `SOCKET_RailGrip_14` | `_Bellows` | 4.3563 | 1.3171 |
+| BP3 | `SOCKET_RailGrip_15` | `_Bellows` | 4.6528 | 1.3705 |
+| BP3 | `SOCKET_RailGrip_16` | `_Bellows` | 4.9493 | 1.4239 |
+| BP3 | `SOCKET_RailGrip_17` | `_Bellows` | 5.2458 | 1.4772 |
+| BP3 | `SOCKET_RailGrip_18` | `_Bellows` | 5.5423 | 1.5306 |
+| BP3 | `SOCKET_RailGrip_19` | `_Bellows` | 5.8388 | 1.5840 |
+| BP3 | `SOCKET_RailGrip_20` | `_Bellows` | 6.1353 | 1.6373 |
+| BP3 | `SOCKET_RailGrip_21` | `_Bellows` | 6.4318 | 1.6907 |
+| BP3 | `SOCKET_RailGrip_22` | `_Head` | 6.6600 | 1.7974 |
+
+All at local Y 0.90, Z 0.05. Positions come from `build_stats.json` (`rail_grips`).

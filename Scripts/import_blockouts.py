@@ -96,7 +96,7 @@ def x_len(mesh):
 for rel, dest in JOBS:
     _nm = os.path.splitext(os.path.basename(rel))[0]
     _old = unreal.load_asset(dest + "/" + _nm) if unreal.EditorAssetLibrary.does_asset_exist(dest + "/" + _nm) else None
-    if _old and _nm in ("SM_Corvette4C_Body", "SM_FighterC_Body") and convex_count(_old) == 0 and os.environ.get("LA_CLEAN") == "1":
+    if _old and _nm in ("SM_Corvette4C_Body", "SM_FighterC_Body") and convex_count(_old) == 0:
         # Old import with unmatched UCX names: delete it so the reimport builds collision from scratch.
         refs = _reg.get_referencers(dest + "/" + _nm, unreal.AssetRegistryDependencyOptions(True, True, True, True, True)) or []
         print("[LA_IMPORT] %s has 0 collision; referencers %s; deleting for a clean import: %s" % (_nm, [str(r) for r in refs], unreal.EditorAssetLibrary.delete_asset(dest + "/" + _nm)))
@@ -142,7 +142,7 @@ for rel, dest in JOBS:
         if bs:
             bs.set_editor_property("collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
     missing = [k for k in KEY_SOCKETS.get(name, []) if not has(k)]
-    line = "%s: X %.1f cm, LODs %d, mats %d, collision convex %d, key sockets missing: %s" % (name, L, nlod, nmat, convex_count(mesh), missing or "none")
+    line = "%s: X %.1f cm, LODs %d, mats %d, collision convex %d, sockets %d (RailGrip %d), key sockets missing: %s" % (name, L, nlod, nmat, convex_count(mesh), len(mesh.get_editor_property("sockets")) if False else sum(1 for i in range(200) if mesh.find_socket("RailGrip_%02d" % i)) + 0, sum(1 for i in range(200) if mesh.find_socket("RailGrip_%02d" % i)), missing or "none")
     log(line); REPORT.append(line)
     unreal.EditorAssetLibrary.save_loaded_asset(mesh)
 # ---- Map ----

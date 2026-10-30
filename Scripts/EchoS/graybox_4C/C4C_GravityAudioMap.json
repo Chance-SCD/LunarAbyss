@@ -1,0 +1,11 @@
+{
+  "version": "1.8",
+  "source": "UShipDamageStateComponent::OnGravityStateChanged(EGravityState Old, EGravityState New)  (spec 6.6)",
+  "events": [
+    {"state": "Off", "when": "New == Off (from On or Failing)", "action": "PlayAtLocation SOCKET_GravityEngine; PA queue once per loss", "cues": ["SND_4C_GRV_001", "SND_4C_GRV_003"]},
+    {"state": "Restoring", "when": "New == Restoring", "action": "PlayAtLocation SOCKET_GravityEngine; stop any SpinDown tail (FadeOut 0.3 s)", "cues": ["SND_4C_GRV_002"]},
+    {"state": "Off", "when": "Footstep_L/R notify while state == Off", "action": "footstep cue swap: deck-plate set -> mag-boot set (ball_l / ball_r)", "cues": ["SND_4C_GRV_004"]},
+    {"state": "Off", "when": "SprayStart notify while state == Off", "action": "layer recoil on spine_03", "cues": ["SND_4C_GRV_005"]},
+    {"state": "On", "when": "New == On", "action": "footstep cue swap back to deck-plate set; no sound", "cues": []}
+  ]
+}
